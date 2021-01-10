@@ -1,7 +1,7 @@
 ---
 layout: home
 paginate: true
-alt_title: "T.I.N.A.P.W."
+alt_title: "This is not a personal website"
 sub_title: "Neuroscience and stuff"
 image: /assets/images/enfant_intuition.jpg
 introduction: |
