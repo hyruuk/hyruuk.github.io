@@ -1,8 +1,8 @@
 ---
 layout: home
 paginate: true
-alt_title: "alt title"
-sub_title: "sub title"
+alt_title: "T.I.N.A.P.W."
+sub_title: "Neuroscience and stuff"
 image: /assets/images/enfant_intuition.jpg
 introduction: |
   Basically Basic is a [Jekyll theme](https://jekyllrb.com/docs/themes/) meant as a substitute for the default --- [Minima](https://github.com/jekyll/minima). Conventions and features found there are fully supported by **Basically Basic**, with a few enhancements thrown in for good measure:
