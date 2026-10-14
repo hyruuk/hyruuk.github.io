@@ -392,3 +392,12 @@
   event: Brainhack School (2018, 2021)
   location: Montréal / online
   keywords: [neuroimaging]
+
+- id: pipeline-test-2026-pipeline-test
+  type: talk
+  title: Pipeline test — please ignore
+  date: 2026-11
+  event: Pipeline test 2026
+  location: Online
+  projects:
+    - cneuromod-mario
