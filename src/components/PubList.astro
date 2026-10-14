@@ -53,7 +53,7 @@ const doiUrl = (doi: string) => `https://doi.org/${doi}`;
               <span class="badge">{t(lang, `pubs.type.${d.type}` as 'pubs.type.article')}</span>
               {d.status !== 'published' && <span class="badge">{t(lang, `pubs.status.${d.status}` as 'pubs.status.in-press')}</span>}
               {d.pdf && (
-                <a class="list__link" href={d.pdf} rel="noopener" target="_blank">
+                <a class="list__link" href={d.pdf} rel="noopener" target="_blank" data-astro-prefetch="false">
                   PDF
                 </a>
               )}

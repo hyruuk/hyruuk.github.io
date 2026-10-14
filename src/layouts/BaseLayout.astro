@@ -68,6 +68,16 @@ const ogImage = new URL(image ?? worldImages.tiers[0].webp, site.url).href;
     <meta property="og:image" content={ogImage} />
     <meta property="og:locale" content={lang === 'fr' ? 'fr_CA' : 'en_US'} />
     <meta name="twitter:card" content="summary_large_image" />
+    {/*
+      Page transitions are ours (router/swap.ts + world/controller.ts), not the View Transition API:
+      its full-page snapshots pause rendering during the swap and made camera flights stutter. Hiding
+      it before the router loads makes the router swap pages directly.
+    */}
+    <script is:inline>
+      try {
+        Object.defineProperty(document, 'startViewTransition', { value: undefined, configurable: true });
+      } catch (e) {}
+    </script>
     <ClientRouter fallback="swap" />
     <script>
       import '../scripts/router/swap';

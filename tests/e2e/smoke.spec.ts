@@ -79,20 +79,67 @@ test('arrow keys walk along the panorama', async ({ page }) => {
   await expect(page).toHaveURL(/\/explore\/music\/$/);
 });
 
-test('touch screens: a place chip previews the place, a second tap enters it', async ({ browser }) => {
+test('touch screens: every place is labelled on the map; a label enters it, the art needs two taps', async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 412, height: 839 }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
   await page.goto('/');
   await page.waitForSelector('#world[data-loaded]');
-  const chip = page.locator('.place-strip a[data-kw="videogames"]');
-  const before = await cameraScale(page);
-  await chip.tap();
+  await expect(page.locator('.place-strip')).toHaveCount(0);
+  const labels = page.locator('.place-label');
+  const count = await labels.count();
+  expect(count).toBeGreaterThanOrEqual(7);
+  // all on screen, none overlapping; places outside the picture are pinned to its edges
+  await expect(page.locator('.place-label[data-kw="videogames"]')).toHaveAttribute('data-edge', 'left');
+  const boxes = await labels.evaluateAll((els) =>
+    els.map((el) => {
+      const r = el.getBoundingClientRect();
+      return { l: r.left, r: r.right, t: r.top, b: r.bottom, o: Number(getComputedStyle(el).opacity) };
+    }),
+  );
+  for (const [i, a] of boxes.entries()) {
+    expect(a.o).toBeGreaterThan(0.5);
+    expect(a.l).toBeGreaterThanOrEqual(0);
+    expect(a.r).toBeLessThanOrEqual(412);
+    for (const b of boxes.slice(i + 1)) expect(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t).toBe(true);
+  }
+  // a tap on the art spotlights a place first…
+  await page.locator('a.hotspot[data-kw="music"]').dispatchEvent('click');
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.locator('#world')).toHaveAttribute('data-armed', 'videogames');
-  await expect.poll(() => cameraScale(page), { timeout: 12_000 }).not.toBeCloseTo(before, 2);
-  await chip.tap();
+  await expect(page.locator('#world')).toHaveAttribute('data-armed', 'music');
+  // …while a label enters its place at once
+  await page.locator('.place-label[data-kw="videogames"]').tap();
   await expect(page).toHaveURL(/\/explore\/videogames\/$/);
   await ctx.close();
+});
+
+test('the camera starts flying on click, before the next page has arrived', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForSelector('#world[data-loaded]');
+  // the places map (/world/places.json) is loaded once the browser is idle
+  await page.waitForFunction(() => performance.getEntriesByType('resource').some((e) => e.name.endsWith('/world/places.json')));
+  await page.waitForTimeout(300);
+  await page.route('**/code/', async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    await route.continue();
+  });
+  await page.locator('.room--code').first().click();
+  await expect(page.locator('#world')).toHaveAttribute('data-flying', '', { timeout: 1000 });
+  await expect(page).toHaveURL(/\/$/); // still on the old page
+  await expect(page).toHaveURL(/\/code\/$/, { timeout: 5000 });
+  await expect(page.locator('h1')).toHaveText(/code/i);
+});
+
+test('WebGL draws the world once ready (where available)', async ({ page }) => {
+  const errors = watchErrors(page);
+  await page.goto('/');
+  const gl = await page.evaluate(() => !!document.createElement('canvas').getContext('webgl2'));
+  test.skip(!gl, 'no WebGL 2 in this browser');
+  await expect(page.locator('#world')).toHaveAttribute('data-gl-done', '', { timeout: 15_000 });
+  await page.locator('.room--research').click();
+  await expect(page).toHaveURL(/\/research\/$/);
+  await settle(page);
+  await expect.poll(() => cameraScale(page), { timeout: 12_000 }).toBeGreaterThan(1.2);
+  expect(errors).toEqual([]);
 });
 
 test('HYRUUK draws a new expansion on click', async ({ page }) => {

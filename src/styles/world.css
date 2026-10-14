@@ -10,13 +10,12 @@
   isolation: isolate;
 }
 
-.world-camera {
+.world-camera,
+.world-spots {
   position: absolute;
   left: 0;
   top: 0;
   transform-origin: 0 0;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
 }
 
 .world-picture,
@@ -31,11 +30,42 @@
   height: 100%;
 }
 
-/* during a flight the camera and the stars get their own compositor layer (smooth motion);
-   at rest they are re-rasterised at the final scale, so the art stays sharp */
-#world[data-flying] .world-camera,
-#world[data-flying] .world-stars {
+/* CSS renderer only (no WebGL): during a flight the camera and the stars get their own compositor
+   layer; at rest they are re-rasterised at the final scale, so the art stays sharp */
+#world[data-flying]:not([data-gl]) .world-camera,
+#world[data-flying]:not([data-gl]) .world-stars {
   will-change: transform;
+}
+
+/* ---------- WebGL renderer ----------
+   src/scripts/world/gl/renderer.ts draws all the layers below (.world-stars … .world-grain) in one
+   pass. Its canvas fades in over them once ready; then they are no longer painted. */
+
+.world-gl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+#world[data-gl] .world-gl {
+  opacity: 1;
+}
+
+#world[data-gl-done] .world-gl {
+  transition: none;
+}
+
+#world[data-gl-done] :is(.world-stars, .world-dim, .world-vignette, .world-grain) {
+  display: none;
+}
+
+/* hidden, not removed: the camera's transform stays readable and the layers can come back if WebGL is lost */
+#world[data-gl-done] .world-camera > * {
+  visibility: hidden;
 }
 
 /* ---------- the infinite universe around the painting ----------
@@ -157,7 +187,9 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ---------- stage frames: where the camera rectangle is framed on screen ---------- */
+/* ---------- stage frames: where the camera rectangle is framed on screen ----------
+   One per stage (backdrop = the whole screen), so the controller can frame the next page's place
+   before that page has arrived. */
 
 .world-frame {
   position: absolute;
@@ -169,31 +201,31 @@
   height: 100vh;
 }
 
-html[data-stage='home'] .world-frame {
+.world-frame[data-stage='home'] {
   width: calc(100vw - var(--panel-w) - var(--panel-gap));
   height: 100vh;
 }
 
-html[data-stage='focus'] .world-frame {
+.world-frame[data-stage='focus'] {
   width: 46vw;
   height: 100vh;
 }
 
 @media (max-width: 1023px) and (orientation: portrait), (max-width: 767px) {
-  html[data-stage='home'] .world-frame {
+  .world-frame[data-stage='home'] {
     top: var(--header-h);
     width: 100vw;
     height: 56svh;
   }
 
-  html[data-stage='focus'] .world-frame {
+  .world-frame[data-stage='focus'] {
     width: 100vw;
     height: 46svh;
   }
 }
 
 @media (max-width: 1023px) and (orientation: landscape) and (min-width: 768px) {
-  html[data-stage='focus'] .world-frame {
+  .world-frame[data-stage='focus'] {
     width: 50vw;
   }
 }
@@ -242,10 +274,14 @@ html[data-stage='focus'] .world-frame {
   opacity: 0.6;
 }
 
-/* never react while flying or when not on the home page */
+/* never react while flying or when not on the home page; hidden while flying (they don't fly along) */
 #world[data-flying] .hotspot-layer,
 html:not([data-stage='home']) .hotspot-layer {
   pointer-events: none;
+}
+
+#world[data-flying] .world-spots {
+  visibility: hidden;
 }
 
 html:not([data-stage='home']) .spot-dim {
@@ -274,8 +310,12 @@ html:not([data-stage='home']) .spot-dim {
   overflow: hidden;
 }
 
+/* links (tabindex -1, in an aria-hidden layer: the SVG hotspots are the accessible way in) that only
+   take taps on touch screens; with a mouse, hovering a place on the art shows its label */
 .place-label {
   position: absolute;
+  text-decoration: none;
+  pointer-events: none;
   left: 0;
   top: 0;
   display: grid;
@@ -351,14 +391,24 @@ html:not([data-stage='home']) .place-label,
   opacity: 0 !important;
 }
 
-/* touch screens: labels become always-visible markers */
+/* touch screens: labels are the always-visible way into each place (one tap enters);
+   places outside the picture are pinned to its edge, pointing to where they are */
 @media (hover: none), (pointer: coarse) {
   html[data-stage='home'] .place-label {
     opacity: 0.92;
-    padding: 5px 9px 5px 7px;
-    font-size: 0.56rem;
+    padding: 6px 10px 6px 8px;
+    font-size: 0.58rem;
     letter-spacing: 0.14em;
     column-gap: 6px;
+    pointer-events: auto;
+  }
+
+  .place-label[data-edge='left'] .place-label__name::before {
+    content: '‹ ';
+  }
+
+  .place-label[data-edge='right'] .place-label__name::after {
+    content: ' ›';
   }
 
   html[data-stage='home'] .place-label__counts {
@@ -366,7 +416,21 @@ html:not([data-stage='home']) .place-label,
   }
 
   html[data-stage='home'] .place-label__dot {
-    animation: marker-pulse 2.4s ease-in-out infinite;
+    position: relative;
+  }
+
+  /* a pulsing ring (transform/opacity only: no repaint) */
+  html[data-stage='home'] .place-label__dot::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 24%, transparent);
+    animation: marker-ring 2.4s ease-in-out infinite;
+  }
+
+  #world[data-flying] .place-label__dot::after {
+    animation: none;
   }
 
   #world[data-armed] .place-label {
@@ -374,11 +438,16 @@ html:not([data-stage='home']) .place-label,
   }
 }
 
-@keyframes marker-pulse {
+@keyframes marker-ring {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+
   50% {
-    box-shadow:
-      0 0 0 6px color-mix(in srgb, var(--accent) 20%, transparent),
-      0 0 14px var(--accent);
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -391,14 +460,16 @@ html:not([data-stage='home']) .place-label,
   }
 
   #world.is-hinting .hotspot-area,
-  .place-label__dot {
+  .place-label__dot,
+  .place-label__dot::after {
     animation: none !important;
   }
 }
 
 /* without JavaScript the camera cannot run: show the art plainly */
 @media (scripting: none) {
-  .world-camera {
+  .world-camera,
+  .world-spots {
     width: 100% !important;
     height: auto !important;
     aspect-ratio: 1210 / 900;

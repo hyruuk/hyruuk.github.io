@@ -54,6 +54,8 @@ The colours of the three rooms are the three segments of the little bar under th
 
    When you're happy: `git add -A && git commit -m "…" && git push`.
    Before a big push you can check everything exactly like GitHub will: `npm run ci`.
+   To judge the camera motion, use the built site (`npm run build && npm run preview`): the dev server is slower and
+   only starts a flight once the next page has loaded, not on click.
 
 ## 3. Adding something new (automatic placement)
 

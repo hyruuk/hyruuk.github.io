@@ -84,7 +84,7 @@ const roomLabel = p.room === 'community' ? t(lang, 'room.community') : t(lang, `
                       <LoopVideo src={f.video} poster={f.src} label={text(f.alt, lang)} lang={lang} />
                     </div>
                   ) : (
-                    <a class="figure__media" href={f.src.src} target="_blank" rel="noopener" aria-label={`${text(f.alt, lang)} — ${t(lang, 'project.fullSize')}`}>
+                    <a class="figure__media" href={f.src.src} target="_blank" rel="noopener" data-astro-prefetch="false" aria-label={`${text(f.alt, lang)} — ${t(lang, 'project.fullSize')}`}>
                       <Picture
                         src={f.src}
                         alt={text(f.alt, lang)}

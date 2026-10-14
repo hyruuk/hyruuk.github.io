@@ -4,6 +4,11 @@
  * swapped by the router (see src/scripts/router/swap.ts), so it survives navigation.
  * Per-page state comes from <html data-camera/data-stage/data-look> and is applied by
  * src/scripts/world/controller.ts.
+ *
+ * Layers: the CSS stack below (.world-stars … .world-grain) paints the first frame and is the fallback;
+ * once its textures are loaded, a WebGL canvas drawing the same stack takes over (gl/renderer.ts).
+ * Hotspots (.world-spots) and labels stay HTML/SVG above it. One .world-frame per stage tells where
+ * a camera rectangle is framed on screen, so a flight can be planned before the next page arrives.
  */
 import coreSrc from '../../scripts/world/camera-core.js?raw';
 import { getKeywords, roomCounts } from '../../lib/content';
@@ -32,6 +37,9 @@ const huge = `M-4000 -4000 H${W + 4000} V${H + 4000} H-4000 Z`;
 const looks = JSON.stringify(world.looks);
 const tiers = JSON.stringify(worldImages.tiers.map(({ w, avif, webp }) => ({ w, avif, webp })));
 const fallback = worldImages.tiers.find((t) => t.w >= 1815) ?? worldImages.tiers[0];
+// textures for the WebGL renderer (src/scripts/world/gl/renderer.ts): the same images as the CSS layers
+const layers = JSON.stringify({ aura: worldImages.aura, blur: worldImages.blur, stars: worldImages.stars, twinkle: worldImages.twinkle });
+const stages = ['home', 'focus', 'backdrop'] as const;
 
 // label visibility follows the hovered/focused/armed region
 const labelCss = places
@@ -43,10 +51,10 @@ const labelCss = places
 
 const bootstrap = `(function(){${coreSrc.replace(/^export\s+/gm, '')}
 var root=document.documentElement,w=document.getElementById('world');
-var camEl=w.querySelector('.world-camera'),frame=frameOf(w.querySelector('.world-frame'));
+var frame=frameOf(w.querySelector('.world-frame[data-stage="'+(root.dataset.stage||'backdrop')+'"]')||w.querySelector('.world-frame'));
 var spec=JSON.parse(root.dataset.camera||'{"rect":[0,0,${W},${H}]}');
 var c=computeCamera(frame,resolveSpec(spec,frame));
-camEl.style.transform=cameraTransform(c);
+w.querySelector('.world-camera').style.transform=w.querySelector('.world-spots').style.transform=cameraTransform(c);
 var looks=JSON.parse(w.dataset.looks),look=looks[root.dataset.look]||looks.full;
 w.querySelector('.world-dim').style.opacity=look.dim;
 w.querySelector('.world-vignette').style.opacity=look.vignette;
@@ -63,10 +71,11 @@ w.querySelectorAll('.place-label').forEach(function(el){el.style.transform='tran
   id="world"
   data-looks={looks}
   data-tiers={tiers}
+  data-layers={layers}
   data-units-w={W}
   data-units-h={H}
 >
-  <div class="world-frame" aria-hidden="true"></div>
+  {stages.map((stage) => <div class="world-frame" data-stage={stage} aria-hidden="true" />)}
   <div class="world-stars" aria-hidden="true" style={`--stars:url(${worldImages.stars});--twinkle:url(${worldImages.twinkle})`}></div>
   <div class="world-camera" style={`width:${W}px;height:${H}px`}>
     <img class="world-aura" src={worldImages.aura} alt="" aria-hidden="true" decoding="async" fetchpriority="low" />
@@ -77,6 +86,12 @@ w.querySelectorAll('.place-label').forEach(function(el){el.style.transform='tran
     </picture>
     <noscript><img class="world-img world-img--static" src={fallback.webp} alt="" width={W} height={H} /></noscript>
     <img class="world-blur" src={worldImages.blur} alt="" aria-hidden="true" width={W} height={H} decoding="async" />
+  </div>
+  <div class="world-dim" aria-hidden="true"></div>
+  <div class="world-vignette" aria-hidden="true"></div>
+  <div class="world-grain" aria-hidden="true"></div>
+  {/* the WebGL canvas (.world-gl) is inserted here once ready: it draws all the layers above in one pass */}
+  <div class="world-spots" style={`width:${W}px;height:${H}px`}>
     <div class="hotspot-layer">
       <svg class="hotspots" viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="group" aria-label="Places">
         {
@@ -119,13 +134,20 @@ w.querySelectorAll('.place-label').forEach(function(el){el.style.transform='tran
       </svg>
     </div>
   </div>
-  <div class="world-dim" aria-hidden="true"></div>
-  <div class="world-vignette" aria-hidden="true"></div>
-  <div class="world-grain" aria-hidden="true"></div>
   <div class="world-labels" aria-hidden="true">
     {
       places.map(({ k, r, counts }) => (
-        <span class="place-label" data-kw={k.id} data-x={r.label[0]} data-y={r.label[1]} style={`--accent:${k.data.accent}`}>
+        <a
+          class="place-label"
+          data-kw={k.id}
+          data-x={r.label[0]}
+          data-y={r.label[1]}
+          href={localize(`/explore/${k.id}/`, 'en')}
+          data-href-en={localize(`/explore/${k.id}/`, 'en')}
+          data-href-fr={localize(`/explore/${k.id}/`, 'fr')}
+          tabindex="-1"
+          style={`--accent:${k.data.accent}`}
+        >
           <span class="place-label__dot" />
           <span class="place-label__name" data-label-en={k.data.label.en} data-label-fr={k.data.label.fr}>
             {k.data.label.en}
@@ -135,7 +157,7 @@ w.querySelectorAll('.place-label').forEach(function(el){el.style.transform='tran
             {counts.code > 0 && <i class="c-code">{counts.code}</i>}
             {counts['art-music'] > 0 && <i class="c-art">{counts['art-music']}</i>}
           </span>
-        </span>
+        </a>
       ))
     }
   </div>

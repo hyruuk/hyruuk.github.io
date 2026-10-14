@@ -5,8 +5,10 @@
  *   pauses/resumes it for good (WCAG 2.2.2). With reduced motion it never starts by itself.
  * - Tiles with a cover video play it while visible (never with reduced motion or data saver), over the
  *   still cover.
+ * Videos only start once the camera has landed: starting a video decoder mid-flight stalls the GPU.
  */
 import { onPage } from './lifecycle';
+import { whenLanded } from './world/landing';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -18,21 +20,22 @@ function play(v: HTMLVideoElement) {
 onPage((signal) => {
   const videos = document.querySelectorAll<HTMLVideoElement>('#page video[data-loop-video]');
   if (!videos.length) return;
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        const v = e.target as HTMLVideoElement;
-        const pausedByUser = v.closest('.loop-video')?.hasAttribute('data-paused');
-        if (e.isIntersecting && !pausedByUser && !reduced.matches) play(v).catch(() => {});
-        else v.pause();
-      }
-    },
-    { threshold: 0.25 },
-  );
-  videos.forEach((v) => {
-    if (reduced.matches) setPaused(v.closest('.loop-video')!, true);
-    io.observe(v);
-  });
+  let io: IntersectionObserver | null = null;
+  videos.forEach((v) => reduced.matches && setPaused(v.closest('.loop-video')!, true));
+  whenLanded(() => {
+    io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const v = e.target as HTMLVideoElement;
+          const pausedByUser = v.closest('.loop-video')?.hasAttribute('data-paused');
+          if (e.isIntersecting && !pausedByUser && !reduced.matches) play(v).catch(() => {});
+          else v.pause();
+        }
+      },
+      { threshold: 0.25 },
+    );
+    videos.forEach((v) => io!.observe(v));
+  }, signal);
   document.addEventListener(
     'click',
     (e) => {
@@ -47,7 +50,7 @@ onPage((signal) => {
     },
     { signal },
   );
-  return () => io.disconnect();
+  return () => io?.disconnect();
 });
 
 function setPaused(wrap: HTMLElement, paused: boolean) {
@@ -60,24 +63,27 @@ function setPaused(wrap: HTMLElement, paused: boolean) {
 
 /* ---------- tiles: cover animations play by themselves while visible ---------- */
 
-onPage(() => {
+onPage((signal) => {
   const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
   const videos = document.querySelectorAll<HTMLVideoElement>('#page .tile__video');
   if (!videos.length || reduced.matches || saveData) return;
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        const v = e.target as HTMLVideoElement;
-        const tile = v.closest('.tile');
-        if (e.isIntersecting) {
-          play(v)
-            .then(() => tile?.classList.add('is-playing'))
-            .catch(() => {});
-        } else v.pause();
-      }
-    },
-    { threshold: 0.35 },
-  );
-  videos.forEach((v) => io.observe(v));
-  return () => io.disconnect();
+  let io: IntersectionObserver | null = null;
+  whenLanded(() => {
+    io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const v = e.target as HTMLVideoElement;
+          const tile = v.closest('.tile');
+          if (e.isIntersecting) {
+            play(v)
+              .then(() => tile?.classList.add('is-playing'))
+              .catch(() => {});
+          } else v.pause();
+        }
+      },
+      { threshold: 0.35 },
+    );
+    videos.forEach((v) => io!.observe(v));
+  }, signal);
+  return () => io?.disconnect();
 });

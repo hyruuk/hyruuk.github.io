@@ -1,50 +1,19 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { localize, pick, t, type Lang } from '../i18n/utils';
-import { getKeywords } from '../lib/content';
+import { pick, t, type Lang } from '../i18n/utils';
 import { site } from '../lib/data';
 
 interface Props {
   lang: Lang;
 }
 const { lang } = Astro.props;
-const keywords = await getKeywords();
 ---
 
 <BaseLayout lang={lang} path="/" place={{ kind: 'home' }} kind="home">
   <h1 class="sr-only" tabindex="-1">{site.name} — {pick(site.role, lang)} · {pick(site.position, lang)}</h1>
   <p class="home-hint reveal" aria-hidden="true">{t(lang, 'map.hint')}</p>
-  <nav class="place-strip" aria-label={t(lang, 'place.all')} data-tap-again={t(lang, 'place.tapAgain')}>
-    {
-      keywords.map((k) => (
-        <a class="chip" href={localize(`/explore/${k.id}/`, lang)} data-kw={k.id} style={`--accent:${k.data.accent}`}>
-          {k.data.label[lang]}
-        </a>
-      ))
-    }
-  </nav>
   <script>
     import { onPage } from '../scripts/lifecycle';
-
-    // Touch screens: the first tap on a place chip flies the camera there (preview), the second enters.
-    onPage((signal) => {
-      const strip = document.querySelector<HTMLElement>('.place-strip');
-      if (!strip) return;
-      const touch = matchMedia('(hover: none), (pointer: coarse)');
-      strip.addEventListener(
-        'click',
-        (e) => {
-          const chip = (e.target as Element).closest<HTMLAnchorElement>('a[data-kw]');
-          if (!chip || !touch.matches || chip.getAttribute('aria-pressed') === 'true') return;
-          e.preventDefault();
-          strip.querySelectorAll('[aria-pressed]').forEach((c) => c.removeAttribute('aria-pressed'));
-          chip.setAttribute('aria-pressed', 'true');
-          chip.title = strip.dataset.tapAgain ?? '';
-          document.dispatchEvent(new CustomEvent('world:preview', { detail: { kw: chip.dataset.kw } }));
-        },
-        { signal },
-      );
-    });
 
     // First visit of the session: the places glow once, left to right, to show the art is clickable.
     onPage(() => {

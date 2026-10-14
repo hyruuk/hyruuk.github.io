@@ -2,32 +2,42 @@
  * The world camera: flies over the artwork from one page's place to the next.
  *
  * Flow of a navigation (see CLAUDE.md for the invariants):
- *   1. the router fetches the next page; the View Transition captures the old screen
- *   2. our custom swap (router/swap.ts) replaces #page only — the art (#world) stays put
- *   3. astro:after-swap → we read the new <html data-camera>, compute the target camera and fly
- *      there along a smooth zoom/pan path (van Wijk & Nuij, via d3-interpolate's interpolateZoom),
- *      animating only `transform` and `opacity` so it runs on the compositor
- *   4. the new page's content (hidden by data-entering) is revealed during the flight
+ *   1. a link is clicked → astro:before-preparation: if the destination is in the places map
+ *      (places.ts) the flight starts at once, while the next page downloads and the old content
+ *      fades out (router/swap.ts)
+ *   2. our custom swap replaces #page only — the art (#world) stays put
+ *   3. astro:after-swap → the new <html data-camera/data-stage/data-look> is checked against the
+ *      flight (started now if the map didn't know the page, re-aimed if it guessed wrong)
+ *   4. the new content (hidden by data-entering) is revealed as the camera slows down
+ *
+ * Two renderers play the same flight (same maths, motion.ts):
+ *   - WebGL (gl/renderer.ts, in a worker when possible): takes over once its textures are loaded
+ *   - the CSS layers, animated with WAAPI: first paint, and the fallback without WebGL
  */
 import { prefetch } from 'astro:prefetch';
-import { interpolateZoom } from 'd3-interpolate';
-
-// d3-interpolate implements interpolateZoom.rho(), but @types/d3-interpolate does not declare it
-const zoomPath = (interpolateZoom as typeof interpolateZoom & { rho: (rho: number) => typeof interpolateZoom }).rho(1.2);
+import { cameraToView, cameraTransform, computeCamera, frameOf, pickTier, resolveSpec } from './camera-core.js';
+import { type GLHandle, startGL, supportsGL } from './gl/client';
+import type { FromRenderer, Rest } from './gl/renderer';
 import {
-  cameraToView,
-  cameraTransform,
-  computeCamera,
-  frameOf,
-  parseMatrix,
-  pickTier,
-  resolveSpec,
-  viewToCamera,
-} from './camera-core.js';
+  type Cam,
+  camOf,
+  type Flight,
+  flightAt,
+  flightDuration,
+  type Look,
+  LOOK_EASING,
+  lookEase,
+  now,
+  pathOf,
+  smootherstep,
+  starsOf,
+  travel,
+  type View,
+} from './motion';
+import { loadPlaces, type PlaceInfo, placeKey, placeOf } from './places';
 
-type Cam = { s: number; tx: number; ty: number };
-type Look = { dim: number; vignette: number; blur: number };
 type Tier = { w: number; avif: string; webp: string };
+type Active = Flight & { path: (t: number) => View };
 
 const world = document.getElementById('world');
 
@@ -36,11 +46,14 @@ if (world) init(world);
 function init(world: HTMLElement) {
   const root = document.documentElement;
   const cam = world.querySelector<HTMLElement>('.world-camera')!;
-  const frameEl = world.querySelector<HTMLElement>('.world-frame')!;
+  const spots = world.querySelector<HTMLElement>('.world-spots')!;
+  const stars = world.querySelector<HTMLElement>('.world-stars');
   const img = world.querySelector<HTMLImageElement>('.world-img')!;
   const source = world.querySelector<HTMLSourceElement>('.world-picture source');
   const hotspotLayer = world.querySelector<HTMLElement>('.hotspot-layer');
   const labelsLayer = world.querySelector<HTMLElement>('.world-labels');
+  const frames: Record<string, HTMLElement> = {};
+  world.querySelectorAll<HTMLElement>('.world-frame').forEach((el) => (frames[el.dataset.stage!] = el));
   const layers = {
     dim: world.querySelector<HTMLElement>('.world-dim')!,
     vignette: world.querySelector<HTMLElement>('.world-vignette')!,
@@ -48,152 +61,188 @@ function init(world: HTMLElement) {
   };
   const looks: Record<string, Look> = JSON.parse(world.dataset.looks!);
   const tiers: Tier[] = JSON.parse(world.dataset.tiers!);
-  const unitsW = Number(world.dataset.unitsW);
-  const unitsH = Number(world.dataset.unitsH);
-  const stars = world.querySelector<HTMLElement>('.world-stars');
-  let starAnim: Animation | null = null;
-  /** Far-away stars drift slowly as the camera travels (parallax), and barely grow when it zooms. */
-  const starTransform = (view: number[]) =>
-    `translate(${(-(view[0] - unitsW / 2) * 0.14).toFixed(1)}px,${(-(view[1] - unitsH / 2) * 0.14).toFixed(1)}px) scale(${Math.pow(unitsW / view[2], 0.07).toFixed(4)})`;
-  const placeStars = (c: Cam) => {
-    if (stars) stars.style.transform = starTransform(cameraToView(c, innerWidth, innerHeight));
-  };
+  const assets: { aura: string; blur: string; stars: string; twinkle: string } = JSON.parse(world.dataset.layers!);
+  const W = Number(world.dataset.unitsW);
+  const H = Number(world.dataset.unitsH);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const touch = matchMedia('(hover: none), (pointer: coarse)');
 
-  let flight: Animation | null = null;
-  let layerAnims: Animation[] = [];
+  /* ---------- state ---------- */
+
+  const here = (): PlaceInfo => ({ camera: root.dataset.camera ?? '', stage: root.dataset.stage ?? 'backdrop', look: root.dataset.look ?? 'full' });
+  /** where the camera is going (or is) */
+  let aim: PlaceInfo = here();
+  let restCam: Cam = camFor(aim);
+  let restLook: Look = lookOf(aim.look);
+  /** a look change without a flight (a jump), still fading */
+  let lookFade: { from: Look; t0: number; duration: number } | null = null;
+  let flight: Active | null = null;
+  let landTimer = 0;
+  let domAnims: Animation[] = [];
   let snapNext = false;
-  let currentTier = Number(world.dataset.tier || 0);
+  /** the place a flight started at click time is heading to (checked once the page has arrived) */
+  let expected: string | null = null;
+  let enterX = 0;
   let revealTimer = 0;
+  let currentTier = Number(world.dataset.tier || 0);
+  let gl: GLHandle | null = null;
+  let glState: 'off' | 'starting' | 'ready' | 'on' = 'off';
 
-  const spec = () => JSON.parse(root.dataset.camera || '{"rect":[0,0,1210,900]}');
-  let previewSpec: Record<string, unknown> | null = null; // home-page preview of a place (touch screens)
-  const target = (): Cam => {
-    const f = frameOf(frameEl);
-    return computeCamera(f, resolveSpec(previewSpec ?? spec(), f));
+  function camFor(p: PlaceInfo): Cam {
+    const f = frameOf(frames[p.stage] ?? frames.backdrop);
+    return computeCamera(f, resolveSpec(JSON.parse(p.camera || `{"rect":[0,0,${W},${H}]}`), f));
+  }
+  function lookOf(name?: string): Look {
+    return looks[name || 'full'] ?? looks.full;
+  }
+
+  /** What is on screen right now. */
+  function shown(): { cam: Cam; look: Look } {
+    const t = now();
+    if (flight) {
+      const at = flightAt(flight, flight.path, t);
+      return { cam: camOf(at.view, flight.vw, flight.vh), look: at.look };
+    }
+    if (lookFade) {
+      const k = lookEase(Math.min(1, (t - lookFade.t0) / lookFade.duration));
+      const a = lookFade.from;
+      const b = restLook;
+      return { cam: restCam, look: { dim: a.dim + (b.dim - a.dim) * k, vignette: a.vignette + (b.vignette - a.vignette) * k, blur: a.blur + (b.blur - a.blur) * k } };
+    }
+    return { cam: restCam, look: restLook };
+  }
+
+  /* ---------- CSS renderer (first paint, fallback) ---------- */
+
+  const starCss = (view: View) => {
+    const s = starsOf(view, W, H);
+    return `translate(${s.tx.toFixed(1)}px,${s.ty.toFixed(1)}px) scale(${s.s.toFixed(4)})`;
   };
-  const current = (): Cam => parseMatrix(getComputedStyle(cam).transform) ?? target();
-  const lookNow = (): Look => looks[root.dataset.look || 'full'] ?? looks.full;
 
-  /* ---------- looks: dim / vignette / blurred backdrop ---------- */
+  function domStop() {
+    domAnims.forEach((a) => a.cancel());
+    domAnims = [];
+  }
 
-  function applyLook(look: Look, duration: number) {
-    layerAnims.forEach((a) => a.cancel());
-    layerAnims = [];
+  /** CSS layers at rest (kept up to date behind the WebGL canvas too, in case it is lost). */
+  function domRest(c: Cam, look: Look, from?: Look, duration = 0) {
+    domStop();
+    const t = cameraTransform(c);
+    cam.style.transform = t;
+    spots.style.transform = t;
+    if (stars) stars.style.transform = starCss(cameraToView(c, innerWidth, innerHeight) as View);
     for (const [key, el] of Object.entries(layers) as [keyof Look, HTMLElement][]) {
-      const to = String(look[key]);
-      const from = getComputedStyle(el).opacity;
-      el.style.opacity = from;
-      if (!duration || from === to) {
-        el.style.opacity = to;
-        continue;
+      el.style.opacity = String(look[key]);
+      if (from && duration && glState !== 'on' && from[key] !== look[key]) {
+        domAnims.push(el.animate([{ opacity: String(from[key]) }, { opacity: String(look[key]) }], { duration, easing: LOOK_EASING }));
       }
-      const a = el.animate([{ opacity: from }, { opacity: to }], { duration, easing: 'cubic-bezier(.45,0,.2,1)', fill: 'both' });
-      a.finished
-        .then(() => {
-          el.style.opacity = to;
-          a.cancel();
-        })
-        .catch(() => {});
-      layerAnims.push(a);
+    }
+  }
+
+  /** The flight as WAAPI keyframes (~100 per second: WAAPI interpolates linearly between them). */
+  function domFly(f: Active) {
+    domStop();
+    const steps = Math.max(24, Math.round(f.duration / 10));
+    const camFrames: Keyframe[] = [];
+    const starFrames: Keyframe[] = [];
+    for (let i = 0; i <= steps; i++) {
+      const view = f.path(smootherstep(i / steps));
+      camFrames.push({ transform: cameraTransform(camOf(view, f.vw, f.vh)) });
+      starFrames.push({ transform: starCss(view) });
+    }
+    const opts: KeyframeAnimationOptions = { duration: f.duration, easing: 'linear', fill: 'forwards' };
+    domAnims.push(cam.animate(camFrames, opts));
+    if (stars) domAnims.push(stars.animate(starFrames, opts));
+    for (const [key, el] of Object.entries(layers) as [keyof Look, HTMLElement][]) {
+      domAnims.push(el.animate([{ opacity: String(f.lookA[key]) }, { opacity: String(f.lookB[key]) }], { duration: f.duration, easing: LOOK_EASING, fill: 'forwards' }));
     }
   }
 
   /* ---------- the flight ---------- */
 
-  /**
-   * "Smootherstep": zero speed *and* zero acceleration at both ends, so the camera eases out of rest
-   * and settles without a jolt; its peak speed is ~1.9× the average (a cubic ease-in-out peaks at 3×,
-   * which made the middle of a flight feel rushed).
-   */
-  const ease = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
-
-  /** Move the camera to the current page's place. Returns the flight duration (0 = instant). */
-  function fly(): number {
-    const to = target();
-    const from = current();
-    flight?.cancel();
-    flight = null;
-    starAnim?.cancel();
-    starAnim = null;
-    cam.style.transform = cameraTransform(from);
-    placeStars(from);
+  /** Move the camera to a place. Returns the flight duration (0 = jump). */
+  function flyTo(p: PlaceInfo): number {
+    const to = camFor(p);
+    const look = lookOf(p.look);
     const vw = innerWidth;
     const vh = innerHeight;
+    const cur = shown();
+    const a = cameraToView(cur.cam, vw, vh) as View;
+    const b = cameraToView(to, vw, vh) as View;
+    aim = p;
+    restCam = to;
+    restLook = look;
+    enterX = Math.sign(b[0] - a[0]) * 28;
+    clearTimeout(landTimer);
+    if (glState === 'on' && !('glDone' in world!.dataset)) showGL(true);
 
-    const a = cameraToView(from, vw, vh);
-    const b = cameraToView(to, vw, vh);
-    const travel = Math.hypot(a[0] - b[0], a[1] - b[1]) / Math.max(a[2], b[2]) + Math.abs(Math.log(a[2] / b[2]));
-    root.style.setProperty('--enter-x', `${Math.sign(b[0] - a[0]) * 28}px`);
-
-    if (reduced.matches || snapNext || travel < 0.003) {
+    if (reduced.matches || snapNext || travel(a, b) < 0.003) {
       snapNext = false;
-      cam.style.transform = cameraTransform(to);
-      applyLook(lookNow(), reduced.matches ? 0 : 280);
-      settle(to);
+      flight = null;
+      delete world!.dataset.flying;
+      const duration = reduced.matches ? 0 : 280;
+      lookFade = duration ? { from: cur.look, t0: now(), duration } : null;
+      domRest(to, look, cur.look, duration);
+      if (glState === 'on') gl!.send({ type: 'rest', rest: restMsg(cur.look, duration) });
+      settle();
+      landed();
       return 0;
     }
 
-    const path = zoomPath(a as [number, number, number], b as [number, number, number]);
-    const duration = Math.min(1700, Math.max(900, path.duration * 0.85));
-    // ~100 samples per second, smooth on 120 Hz screens too (WAAPI interpolates linearly between them)
-    const steps = Math.max(24, Math.round(duration / 10));
-    const keyframes: Keyframe[] = [];
-    const starFrames: Keyframe[] = [];
-    for (let i = 0; i <= steps; i++) {
-      const view = path(ease(i / steps));
-      keyframes.push({ transform: cameraTransform(viewToCamera(view, vw, vh)) });
-      starFrames.push({ transform: starTransform(view) });
-    }
-    const f = cam.animate(keyframes, { duration, easing: 'linear', fill: 'both' });
-    if (stars) {
-      const sa = stars.animate(starFrames, { duration, easing: 'linear', fill: 'both' });
-      starAnim = sa;
-      sa.finished
-        .then(() => {
-          if (starAnim !== sa) return;
-          stars.style.transform = String(starFrames[starFrames.length - 1].transform);
-          sa.cancel();
-          starAnim = null;
-        })
-        .catch(() => {});
-    }
+    lookFade = null;
+    const duration = flightDuration(a, b);
+    const f: Active = { a, b, vw, vh, t0: now(), duration, lookA: cur.look, lookB: look, path: pathOf({ a, b }) };
     flight = f;
     world!.dataset.flying = '';
-    f.finished
-      .then(() => {
-        if (flight !== f) return;
-        cam.style.transform = cameraTransform(to);
-        f.cancel();
-        flight = null;
-        delete world!.dataset.flying;
-        settle(to);
-      })
-      .catch(() => {});
-    applyLook(lookNow(), duration);
-    // load a sharper tier early when zooming in, so it is ready when the flight lands
-    void ensureTier(to.s);
+    if (glState === 'on') {
+      domRest(to, look); // hidden behind the canvas: keep them where the camera is going
+      const { path: _path, ...plain } = f;
+      gl!.send({ type: 'fly', flight: plain });
+      landTimer = window.setTimeout(land, duration);
+    } else {
+      domFly(f);
+      landTimer = window.setTimeout(land, duration + 20); // WAAPI starts on the next frame
+    }
     return duration;
   }
 
+  function land() {
+    if (!flight) return;
+    flight = null;
+    delete world!.dataset.flying;
+    domRest(restCam, restLook);
+    settle();
+    landed();
+    if (glState === 'ready') activateGL();
+  }
+
+  /** The camera is at rest: work held back during the flight can start (see landing.ts). */
+  function landed() {
+    document.dispatchEvent(new Event('world:landed'));
+  }
+
   /** After the camera stops: sharper image if needed, labels, hotspots. */
-  function settle(c: Cam) {
-    void ensureTier(c.s);
-    placeLabels(c);
-    if (!starAnim) placeStars(c);
+  function settle() {
+    placeLabels(restCam);
     syncHotspots();
+    scheduleTier();
   }
 
   /* ---------- image tiers ---------- */
 
-  /**
-   * Swap in a sharper version of the art when zoomed in. It is downloaded and decoded early (during
-   * the flight), but only shown once the camera is at rest: replacing a 4,000-pixel image mid-flight
-   * makes the motion stutter while the browser uploads it to the graphics card.
-   */
+  let tierTimer = 0;
+  /** A sharper version of the art when zoomed in — loaded only while the camera rests. */
+  function scheduleTier() {
+    clearTimeout(tierTimer);
+    tierTimer = window.setTimeout(() => {
+      if (flight) return;
+      if (glState === 'on' || glState === 'ready') gl!.send({ type: 'art', want: W * restCam.s * glDpr() });
+      else void ensureTier(restCam.s);
+    }, 700);
+  }
+
   async function ensureTier(s: number) {
-    const t = pickTier(tiers, unitsW, s, devicePixelRatio);
+    const t = pickTier(tiers, W, s, devicePixelRatio);
     if (t.w <= currentTier) return;
     const avif = (img.currentSrc || '').endsWith('.avif');
     const pre = new Image();
@@ -204,12 +253,89 @@ function init(world: HTMLElement) {
     } catch {
       return;
     }
-    if (t.w <= currentTier) return;
-    if ('flying' in world!.dataset) return; // settle() asks again once landed (already decoded by then)
+    if (t.w <= currentTier || flight) return; // settle() asks again once landed
     currentTier = t.w;
     world!.dataset.tier = String(t.w);
     if (source) source.srcset = t.avif;
     img.src = t.webp;
+  }
+
+  /* ---------- WebGL renderer ---------- */
+
+  const glDpr = () => Math.min(devicePixelRatio || 1, 2);
+  /** phones: at most the 3,630-px art (≈ 50 MB of video memory with its mipmaps) */
+  const deviceCap = () => (touch.matches && Math.min(screen.width, screen.height) < 820 ? 3630 : Infinity);
+
+  function restMsg(from?: Look, duration = 0): Rest {
+    const r: Rest = { cam: restCam, vw: innerWidth, vh: innerHeight, look: restLook };
+    if (from && duration) Object.assign(r, { lookFrom: from, t0: now(), lookDuration: duration });
+    return r;
+  }
+
+  function startRenderer(useWorker = true) {
+    if (!supportsGL() || glState !== 'off') return;
+    glState = 'starting';
+    const avif = (img.currentSrc || '').endsWith('.avif');
+    void startGL(
+      world!,
+      spots,
+      () => ({
+        cssW: world!.clientWidth,
+        cssH: world!.clientHeight,
+        dpr: glDpr(),
+        units: [W, H],
+        tiers: tiers.map((t) => ({ w: t.w, url: avif ? t.avif : t.webp })),
+        want: currentTier || W * restCam.s * glDpr(), // the image already loaded (cached) first
+        cap: deviceCap(),
+        ...assets,
+        rest: restMsg(),
+      }),
+      onGL,
+      useWorker,
+    ).then((h) => {
+      if (!h && glState === 'starting') glState = 'off';
+    });
+  }
+
+  function onGL(m: FromRenderer, h: GLHandle) {
+    if (m.type === 'ready') {
+      gl = h;
+      glState = 'ready';
+      if (!flight) activateGL();
+    } else if (m.type === 'fail' || m.type === 'lost') {
+      console.info(`[world] WebGL renderer (${h.mode}) ${m.type === 'lost' ? 'lost' : `unavailable: ${m.reason}`}`);
+      const retry = m.type === 'fail' && h.mode === 'worker'; // e.g. no WebGL in workers: try the main thread
+      h.stop();
+      if (gl === h) gl = null;
+      const wasOn = glState === 'on';
+      glState = 'off';
+      delete world!.dataset.gl;
+      delete world!.dataset.glDone;
+      if (wasOn) {
+        // the CSS layers take over where the camera is going
+        clearTimeout(landTimer);
+        if (flight) land();
+        else domRest(restCam, restLook);
+      }
+      if (retry) startRenderer(false);
+    }
+  }
+
+  function activateGL() {
+    if (!gl || glState !== 'ready') return;
+    gl.send({ type: 'rest', rest: restMsg() }); // the camera may have moved while the textures loaded
+    glState = 'on';
+    domStop();
+    requestAnimationFrame(() => requestAnimationFrame(() => showGL(false)));
+    scheduleTier();
+  }
+
+  /** Show the canvas (a short crossfade over identical pictures), then stop painting the CSS layers. */
+  function showGL(instant: boolean) {
+    if (glState !== 'on') return;
+    world!.dataset.gl = '';
+    if (instant) world!.dataset.glDone = '';
+    else window.setTimeout(() => glState === 'on' && (world!.dataset.glDone = ''), 400);
   }
 
   /* ---------- hotspots & labels (home page) ---------- */
@@ -217,37 +343,69 @@ function init(world: HTMLElement) {
   function syncHotspots() {
     const fr = root.lang === 'fr';
     const isHome = root.dataset.stage === 'home';
-    world!.querySelectorAll<SVGAElement>('a.hotspot').forEach((a) => {
+    world!.querySelectorAll<HTMLElement>('a.hotspot, a.place-label').forEach((a) => {
       const href = fr ? a.dataset.hrefFr : a.dataset.hrefEn;
       const label = fr ? a.dataset.labelFr : a.dataset.labelEn;
       if (href) a.setAttribute('href', href);
       if (label) a.setAttribute('aria-label', label);
     });
-    labelsLayer?.querySelectorAll<HTMLElement>('[data-label-en]').forEach((el) => {
+    labelsLayer?.querySelectorAll<HTMLElement>('.place-label__name').forEach((el) => {
       el.textContent = (fr ? el.dataset.labelFr : el.dataset.labelEn) ?? '';
     });
     if (hotspotLayer) hotspotLayer.inert = !isHome;
+    if (labelsLayer) labelsLayer.inert = !isHome;
   }
 
-  /** Forget a previewed / armed place (touch screens). */
+  /** Forget an armed place (touch screens). */
   function disarm() {
     world!.querySelectorAll('a.hotspot.armed').forEach((x) => x.classList.remove('armed'));
     delete world!.dataset.armed;
   }
 
+  /**
+   * Labels follow their place on the art. On touch screens they are the way into each place: all
+   * of them are shown, places outside the picture are pinned to its edge (‹ ›) and labels never overlap.
+   */
   function placeLabels(c: Cam) {
     if (!labelsLayer) return;
-    const vw = innerWidth;
-    const vh = innerHeight;
+    const vw = labelsLayer.clientWidth || innerWidth;
+    const pin = touch.matches && root.dataset.stage === 'home';
+    const fr = frameOf(frames.home ?? frames.backdrop);
+    const boxes: { el: HTMLElement; x: number; y: number; w: number; h: number }[] = [];
     labelsLayer.querySelectorAll<HTMLElement>('.place-label').forEach((el) => {
       const ax = c.tx + Number(el.dataset.x) * c.s;
-      const y = c.ty + Number(el.dataset.y) * c.s;
-      // a place whose anchor is off screen shows no label; the others are kept fully on screen
-      el.toggleAttribute('data-offscreen', ax < 0 || ax > vw || y < 0 || y > vh);
-      const half = el.offsetWidth / 2 + 8;
-      const x = Math.min(Math.max(ax, half), Math.max(half, vw - half));
-      el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+      let y = c.ty + Number(el.dataset.y) * c.s;
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      const half = w / 2 + 8;
+      let edge = '';
+      if (pin) {
+        // the arrow only for places really outside the picture; the others are just kept on screen
+        if (ax < 0) edge = 'left';
+        else if (ax > vw) edge = 'right';
+        y = Math.min(Math.max(y, fr.y + h / 2 + 6), fr.y + fr.h - h / 2 - 6);
+        el.removeAttribute('data-offscreen');
+      } else {
+        el.toggleAttribute('data-offscreen', ax < 0 || ax > vw || y < 0 || y > innerHeight);
+      }
+      if (edge) el.dataset.edge = edge;
+      else delete el.dataset.edge;
+      boxes.push({ el, x: Math.min(Math.max(ax, half), Math.max(half, vw - half)), y, w, h });
     });
+    if (pin) {
+      // nudge overlapping labels apart, top to bottom
+      boxes.sort((a, b) => a.y - b.y);
+      const placed: typeof boxes = [];
+      for (const b of boxes) {
+        for (let guard = 0; guard < boxes.length; guard++) {
+          const hit = placed.find((p) => Math.abs(p.x - b.x) < (p.w + b.w) / 2 + 6 && Math.abs(p.y - b.y) < (p.h + b.h) / 2 + 4);
+          if (!hit) break;
+          b.y = hit.y + (hit.h + b.h) / 2 + 4;
+        }
+        placed.push(b);
+      }
+    }
+    for (const b of boxes) b.el.style.transform = `translate(${b.x.toFixed(1)}px, ${b.y.toFixed(1)}px)`;
   }
 
   // prefetch a place while the pointer rests on it (Astro's prefetch only handles HTML links)
@@ -259,71 +417,67 @@ function init(world: HTMLElement) {
   world.addEventListener('pointerover', prefetchHotspot);
   world.addEventListener('focusin', prefetchHotspot);
 
-  // touch screens: first tap previews a place (spotlight + label), second tap enters it
+  // touch screens: a first tap on the art spotlights a place, a second tap enters it (labels enter at once)
   world.addEventListener('click', (e) => {
     const a = (e.target as Element).closest?.('a.hotspot') as SVGAElement | null;
     if (!a || !touch.matches) return;
     if (a.classList.contains('armed')) return; // second tap: let the router navigate
     e.preventDefault();
-    world.querySelectorAll('a.hotspot.armed').forEach((x) => x.classList.remove('armed'));
+    disarm();
     a.classList.add('armed');
     world.dataset.armed = a.dataset.kw ?? '';
   });
   document.addEventListener('click', (e) => {
-    if (!world.dataset.armed || (e.target as Element).closest?.('#world, .place-strip')) return;
-    disarm();
-    endPreview();
-  });
-
-  /** Touch screens, home page: fly to a place to preview it (from the place strip). */
-  function preview(kw: string) {
-    const a = world!.querySelector<SVGAElement>(`a.hotspot[data-kw="${CSS.escape(kw)}"]`);
-    if (!a?.dataset.rect || root.dataset.stage !== 'home') return;
-    const [rx, ry, rw, rh] = a.dataset.rect.split(',').map(Number);
-    const units = Number(world!.dataset.unitsW);
-    // a little margin around the place, kept inside the artwork
-    const w = Math.min(units, rw * 1.3);
-    const x = Math.max(0, Math.min(units - w, rx - rw * 0.15));
-    previewSpec = { rect: [x, Math.max(0, ry - rh * 0.1), w, rh * 1.2], fit: 'contain', maxScale: 4 };
-    world!.querySelectorAll('a.hotspot.armed').forEach((x) => x.classList.remove('armed'));
-    a.classList.add('armed');
-    world!.dataset.armed = kw;
-    fly();
-  }
-  function endPreview() {
-    if (!previewSpec) return;
-    previewSpec = null;
-    fly();
-  }
-  document.addEventListener('world:preview', (e) => preview((e as CustomEvent<{ kw: string }>).detail.kw));
-  document.addEventListener('world:unpreview', () => {
-    disarm();
-    endPreview();
+    if (world.dataset.armed && !(e.target as Element).closest?.('#world')) disarm();
   });
 
   /* ---------- router hooks ---------- */
 
-  addEventListener('popstate', (e) => {
-    // iOS swipe-back already animates the page: snap instead of flying on top of it
-    if ((e as PopStateEvent & { hasUAVisualTransition?: boolean }).hasUAVisualTransition) snapNext = true;
+  // iOS swipe-back already animates the page: jump instead of flying on top of it.
+  // (capture: runs before the router's own popstate listener starts the navigation)
+  addEventListener(
+    'popstate',
+    (e) => {
+      if ((e as PopStateEvent & { hasUAVisualTransition?: boolean }).hasUAVisualTransition) snapNext = true;
+    },
+    { capture: true },
+  );
+
+  // the flight starts on click, while the next page downloads
+  document.addEventListener('astro:before-preparation', (e) => {
+    const dest = placeOf((e as Event & { to: URL }).to);
+    disarm();
+    expected = dest ? placeKey(dest) : null;
+    if (dest) flyTo(dest);
   });
 
   document.addEventListener('astro:after-swap', () => {
     const page = document.getElementById('page');
-    previewSpec = null;
     disarm();
-    const duration = fly();
+    const real = here();
+    if (placeKey(real) !== expected) flyTo(real); // the map didn't know this page (or guessed wrong)
+    expected = null;
+    page?.style.setProperty('--enter-x', `${enterX}px`);
     clearTimeout(revealTimer);
     const reveal = () => {
-      page?.removeAttribute('data-entering');
+      if (!page) return;
+      // only what is on screen fades in: every animated element costs a GPU layer mid-flight
+      const vh = innerHeight;
+      page.querySelectorAll<HTMLElement>('.reveal').forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.top > vh || r.bottom < 0) el.classList.add('reveal--now');
+      });
+      page.removeAttribute('data-entering');
       const active = document.activeElement;
       if (!active || active === document.body || world.contains(active)) {
-        page?.querySelector<HTMLElement>('h1')?.focus({ preventScroll: true });
+        page.querySelector<HTMLElement>('h1')?.focus({ preventScroll: true });
       }
     };
-    if (!duration) reveal();
-    // reveal the new content as the camera slows down (not at full speed, when any extra work shows)
-    else revealTimer = window.setTimeout(reveal, duration * 0.72);
+    // reveal the new content as the camera settles: painting it costs the GPU a few frames, which
+    // only show when the camera still moves fast (at 88 % of a flight it moves at < 1/5 of its top speed)
+    const wait = flight ? flight.t0 + flight.duration * 0.88 - now() : 0;
+    if (wait > 0) revealTimer = window.setTimeout(reveal, wait);
+    else requestAnimationFrame(reveal);
   });
 
   /* ---------- resize ---------- */
@@ -332,22 +486,47 @@ function init(world: HTMLElement) {
   addEventListener('resize', () => {
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(() => {
-      if (flight) {
-        flight.cancel();
-        flight = null;
-        delete world.dataset.flying;
+      const to = camFor(aim);
+      const same = Math.abs(to.s / restCam.s - 1) < 1e-4 && Math.abs(to.tx - restCam.tx) < 0.5 && Math.abs(to.ty - restCam.ty) < 0.5;
+      const size = { type: 'size' as const, cssW: world.clientWidth, cssH: world.clientHeight, dpr: glDpr() };
+      if (same) {
+        // e.g. a phone's address bar showing or hiding: the place on screen didn't move, keep flying
+        if (gl && glState !== 'off') gl.send(size);
+        if (!flight) settle();
+        return;
       }
-      starAnim?.cancel();
-      starAnim = null;
-      const to = target();
-      cam.style.transform = cameraTransform(to);
-      settle(to);
+      // the stage changed (window resized, phone rotated): jump to the new framing
+      clearTimeout(landTimer);
+      flight = null;
+      lookFade = null;
+      delete world.dataset.flying;
+      restCam = to;
+      restLook = lookOf(aim.look);
+      domRest(restCam, restLook);
+      if (gl && glState !== 'off') gl.send({ ...size, rest: restMsg() });
+      settle();
+      landed();
     });
   });
 
   /* ---------- first load ---------- */
 
-  const start = current();
-  settle(start);
+  domRest(restCam, restLook);
+  settle();
   world.dataset.ready = '';
+  if (document.fonts?.ready) void document.fonts.ready.then(() => !flight && placeLabels(restCam));
+
+  // once the art is on screen and the browser is idle: the places map, then the WebGL renderer
+  const idle = (fn: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 1500 }) : setTimeout(fn, 400));
+  const boot = () =>
+    idle(() => {
+      void loadPlaces();
+      if (!flight) startRenderer();
+      else document.addEventListener('world:landed', () => startRenderer(), { once: true });
+    });
+  if (img.complete && img.naturalWidth) boot();
+  else {
+    img.addEventListener('load', boot, { once: true });
+    img.addEventListener('error', () => void loadPlaces(), { once: true });
+  }
 }

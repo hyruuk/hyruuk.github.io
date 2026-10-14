@@ -20,8 +20,10 @@ persistent Spotify player; HYRUUK generative acronym in the home panel.
 1. **Body = `#world` + `#page` + `#player`.** The router swap (`src/scripts/router/swap.ts`) replaces **only
    `#page`**. Never rely on `transition:persist` for `#world`/`#player` (Safari has no `moveBefore()`: a moved iframe
    reloads → the Spotify player would stop).
-2. **Never give `#world` a `view-transition-name`** (named groups paint above all content). The camera is animated by
-   `src/scripts/world/controller.ts` with WAAPI, outside the View Transition.
+2. **No View Transitions.** `BaseLayout` hides `document.startViewTransition` before the router loads: its
+   full-page snapshots paused rendering mid-flight. Page transitions are ours: `swap.ts` fades the old content out on
+   click (header kept, rail kept between inner pages), the controller reveals the new one. Don't add `transition:*`
+   directives or `view-transition-name`s.
 3. **No runtime state on `<html>`**: Astro rewrites its attributes on every swap. `<html data-camera/data-stage/
    data-look/data-kind>` are *static per page* (set by `BaseLayout`). Runtime state lives on `#world` / `#player`.
 4. **`#world` and `#player` markup must be identical on every page** (the entry page's copy lives all session).
@@ -29,28 +31,44 @@ persistent Spotify player; HYRUUK generative acronym in the home panel.
 5. **Page scripts run once.** Per-page setup goes through `onPage()` (`src/scripts/lifecycle.ts`), which re-runs on
    every page load and aborts its `signal` on `astro:before-swap`. Put a view's `<script>` **inside** `<BaseLayout>`
    (scripts after the layout end up outside `#page`; `adoptStrayScripts` is only a safety net).
-6. **Animate only `transform` and `opacity`.** Blur = crossfade to the pre-blurred image (`.world-blur`). No animated
-   `filter`/`backdrop-filter`.
-7. One element per `view-transition-name` at a time. The header is named `site-header` (keep its group short: clicks
-   are ignored while a View Transition runs).
+6. **Animate only `transform` and `opacity`, of HTML boxes** (not SVG children: those repaint every frame), and
+   no `filter`/`backdrop-filter`/`box-shadow` animations — anything that repaints per frame costs GPU time that a
+   flight needs. Blur = crossfade to the pre-blurred image (`.world-blur` / the renderer's blur texture).
+7. **Nothing heavy mid-flight**: videos start after `world:landed` (`whenLanded()`, `src/scripts/world/landing.ts`),
+   sharper art loads only at rest, and hidden incoming content must not get its own GPU layer (no 3D transforms,
+   `will-change` or pending CSS animations under `#page[data-entering]`): each one is rasterised mid-flight.
 8. Astro 7 `compressHTML: 'jsx'` drops whitespace between inline elements — use `{' '}` when needed.
 9. YAML flow mappings/sequences: **quote values containing commas** (labels, authors).
 10. Never generate `/over.run/`, `/cookiecutter-neuroscience/`, `/unf-montreal.ca/` (other sites on the same domain;
     `check-dist` enforces it). Links to them need `data-astro-reload` or `target="_blank"`.
-11. Touch screens: hotspots and place-strip chips work in two taps (preview, then enter). Keep `#page > .main--home`
-    transparent to pointer events or phones can't tap the art.
+11. Touch screens: the art takes two taps (spotlight, then enter); the place labels on the map are links (one tap),
+    all shown, with places outside the picture pinned to its edge (‹ ›). Keep `#page > .main--home` transparent to
+    pointer events or phones can't tap the art.
 
 ## World layers, media, sound (2026-10)
 
-- `#world` layers, back to front: `.world-stars` (CSS starfield outside the camera, parallax: the controller animates it
-  in sync with each flight; star tiles `public/world/stars*.webp`), then inside `.world-camera`: `.world-aura`
-  (blurred mirrored extension of the art with the faint flux lines baked in, 2.5×), `.world-lqip`, the art (soft eased
-  mask on every side), `.world-blur`. Aura and stars are built by `scripts/world/build-assets.mjs` (`--only=aura`
-  rebuilds just them). **Keep these layers plain raster images**: an SVG `<img>` (re-rasterised at every zoom step)
-  and a starfield of ~25 CSS radial gradients made flights drop to a few frames per second in Firefox.
-- Flights: van Wijk–Nuij path (rho 1.2), "smootherstep" easing, 900–1700 ms, keyframes every ~10 ms. New content is
-  revealed at 72 % of the flight (as the camera slows); sharper art tiers are decoded during the flight but only swapped
-  in once it lands (a mid-flight swap of a 4,000-px image stutters). `will-change: transform` only while flying.
+- **Two renderers, same picture.** The CSS layers (back to front: `.world-stars` starfield with parallax, then in
+  `.world-camera` `.world-aura` (blurred mirrored extension with the flux lines baked in, 2.5×), `.world-lqip`, the art
+  with its soft eased mask, `.world-blur`; then `.world-dim`, `.world-vignette`, `.world-grain`) paint the first frame
+  and are the fallback. Once its textures are loaded, a **WebGL 2 canvas** (`src/scripts/world/gl/renderer.ts`, in a
+  worker on an OffscreenCanvas when possible, else on the main thread) draws the same stack in one pass and the CSS
+  layers stop being painted (`#world[data-gl-done]`). Its shader mirrors `world.css`: **change both together**.
+  Why: scaling a 4,840-px image with CSS transforms made Chrome re-rasterise and re-decode it at every zoom level
+  (50–200 ms GPU stalls); textures are uploaded once. Hotspots (`.world-spots`) and labels stay HTML/SVG above it.
+- Assets: `scripts/world/build-assets.mjs` (`--only=aura` rebuilds aura and stars). Keep the CSS layers plain raster
+  images (an SVG `<img>` or dozens of CSS gradients made Firefox drop to a few fps).
+- **Flights start on click**: `integrations/places-map.mjs` writes `dist/world/places.json` (every page's
+  `data-camera/stage/look`, read from the built pages); on `astro:before-preparation` the controller flies there while
+  the page downloads, and re-aims on `astro:after-swap` if needed (in `astro dev` there's no map: flights start on
+  swap). One `.world-frame[data-stage]` per stage, so the next page's framing is known before it arrives.
+- Flight maths (`src/scripts/world/motion.ts`, shared with the worker): van Wijk–Nuij path (rho 1.2), smootherstep,
+  900–1700 ms, absolute times so worker and page agree. New content is revealed at 88 % of the flight (painting it
+  stalls the GPU for a few frames: invisible only when the camera is slow); only on-screen elements fade in.
+- Links are prefetched on hover/focus (all of them, `prefetchAll`) and on touch-start; file links opt out with
+  `data-astro-prefetch="false"`.
+- Measuring: headless Chrome can use the real GPU (`--enable-gpu --no-sandbox --use-gl=angle --use-angle=gl-egl
+  --ozone-platform=headless`, plus `--disable-accelerated-video-decode`, or video decoding crashes its GPU process);
+  count displayed frames with `Display::DrawAndSwap` trace events (page rAF doesn't see worker or compositor frames).
 - Covers/figures: `cover`, `coverFocus`, `coverVideo`, `figures[]` (schema in `src/content.config.ts`); videos live
   in `public/media/<slug>/` (validated at build). `LoopVideo.astro` + `src/scripts/loop-video.ts`: in-view autoplay,
   pause button, nothing for reduced motion; tile videos autoplay muted while ≥35 % visible (not with reduced motion or

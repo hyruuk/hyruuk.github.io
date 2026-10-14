@@ -1,14 +1,24 @@
 /**
- * Custom page swap for Astro's <ClientRouter />.
+ * Page transitions for Astro's <ClientRouter />.
  *
- * Astro's default swap replaces the whole <body> and moves `transition:persist` elements across.
- * Moving an <iframe> reloads it in browsers without Element.moveBefore() (Safari), which would
- * stop the Spotify player. So only #page is replaced: #world (the art) and #player are never
- * touched — the art keeps flying and the music keeps playing.
- *
- * The incoming page starts hidden (data-entering); the camera controller reveals it during the flight.
+ * No View Transitions: their full-page snapshots pause rendering while the DOM is updated and kept
+ * the browser busy during camera flights (BaseLayout disables them). Instead:
+ *   1. on click (astro:before-preparation) the old page content fades out — the header stays, and
+ *      so does the rail when the next page has one too — while the camera starts flying
+ *      (world/controller.ts) and the next page downloads
+ *   2. once both are done, only #page is replaced. Astro's default swap replaces the whole <body>
+ *      and moves `transition:persist` elements across; moving an <iframe> reloads it in browsers
+ *      without Element.moveBefore() (Safari), which would stop the Spotify player. #world (the art)
+ *      and #player are never touched — the art keeps flying and the music keeps playing.
+ *   3. the incoming page starts hidden (data-entering); the camera controller reveals it during the flight.
  */
-import { swapFunctions, type TransitionBeforeSwapEvent } from 'astro:transitions/client';
+import { prefetch } from 'astro:prefetch';
+import { swapFunctions, type TransitionBeforePreparationEvent, type TransitionBeforeSwapEvent } from 'astro:transitions/client';
+import { placeOf } from '../world/places';
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+let keepRail = false;
+let navigations = 0;
 
 function reifyMedia(root: Element) {
   // Elements parsed by DOMParser come from an inert document: re-create media so they can play.
@@ -33,6 +43,43 @@ function adoptStrayScripts(newDocument: Document) {
   }
 }
 
+// touch screens have no hover: start downloading a page as soon as a finger lands on its link
+document.addEventListener(
+  'touchstart',
+  (e) => {
+    const a = (e.target as Element).closest?.('a[href]');
+    if (a instanceof HTMLAnchorElement && a.origin === location.origin && a.dataset.astroPrefetch !== 'false' && !a.target) {
+      prefetch(a.href, { ignoreSlowConnection: true });
+    }
+  },
+  { passive: true },
+);
+
+document.addEventListener('astro:before-preparation', (event) => {
+  const ev = event as TransitionBeforePreparationEvent;
+  const page = document.getElementById('page');
+  if (!page) return;
+  // videos of the old page stop now: decoding frames during the flight costs GPU time
+  page.querySelectorAll('video').forEach((v) => v.pause());
+  const dest = placeOf(ev.to);
+  keepRail = !!dest && dest.stage !== 'home' && !!page.querySelector(':scope > .panel--rail');
+  const fading = [...page.children].filter(
+    (el) => !el.matches('.site-header, .skip-link') && !(keepRail && el.matches('.panel--rail')) && getComputedStyle(el).opacity !== '0',
+  );
+  const anims = fading.map((el) =>
+    el.animate([{ opacity: getComputedStyle(el).opacity }, { opacity: 0 }], { duration: reduced.matches ? 100 : 220, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' }),
+  );
+  const faded = Promise.all(anims.map((a) => a.finished.catch(() => {})));
+  // a navigation cancelled without another one taking over (rare): bring the old content back
+  const id = ++navigations;
+  ev.signal.addEventListener('abort', () => setTimeout(() => id === navigations && anims.forEach((a) => a.cancel()), 100));
+  // swap only once the old content is gone (the download usually takes longer anyway)
+  const load = ev.loader;
+  ev.loader = async () => {
+    await Promise.all([load(), faded]);
+  };
+});
+
 document.addEventListener('astro:before-swap', (event) => {
   const ev = event as TransitionBeforeSwapEvent;
   const newPage = ev.newDocument.getElementById('page');
@@ -40,10 +87,9 @@ document.addEventListener('astro:before-swap', (event) => {
   if (!newPage || !oldPage) return; // not one of our pages: keep Astro's default swap
 
   newPage.setAttribute('data-entering', '');
-  // Chrome skips a transition when the viewport changes mid-way (e.g. mobile URL bar): harmless,
-  // the page still swaps and the camera still flies — don't let it surface as an error.
-  ev.viewTransition?.ready?.catch(() => {});
-  ev.viewTransition?.finished?.catch(() => {});
+  newPage.toggleAttribute('data-keep-rail', keepRail);
+  keepRail = false;
+  navigations++;
   ev.swap = () => {
     swapFunctions.deselectScripts(ev.newDocument);
     swapFunctions.swapRootAttributes(ev.newDocument);
@@ -53,5 +99,7 @@ document.addEventListener('astro:before-swap', (event) => {
     reifyMedia(newPage);
     adoptStrayScripts(ev.newDocument);
     restoreFocus();
+    // failsafe: never leave the content hidden if the camera controller fails to reveal it
+    window.setTimeout(() => newPage.removeAttribute('data-entering'), 3500);
   };
 });
