@@ -78,4 +78,5 @@ jobs:
 
       - name: Report a failure on the issue
         if: failure()
-        run: gh issue comment "$ISSUE" --body "Sorry, I could not add this item. See the log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        run: |
+          gh issue comment "$ISSUE" --body "Sorry, I could not add this item. See the log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
