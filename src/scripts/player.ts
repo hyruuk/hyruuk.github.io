@@ -20,10 +20,30 @@ type IFrameAPI = {
   createController: (el: HTMLElement, options: Record<string, unknown>, cb: (c: EmbedController) => void) => void;
 };
 
+/** Remember (on this device only) that the visitor found the music, to stop the wave's idle cue. */
+const KNOWN_KEY = 'neural-odyssey:sound-known';
+const HINTED_KEY = 'neural-odyssey:sound-hinted';
+
 const player = document.getElementById('player');
 if (player) init(player);
 
 function init(player: HTMLElement) {
+  try {
+    if (localStorage.getItem(KNOWN_KEY)) player.dataset.known = '';
+    if (sessionStorage.getItem(HINTED_KEY)) player.dataset.hinted = '';
+  } catch {
+    /* storage can be unavailable (private mode, blocked cookies): the cue just shows again */
+  }
+  // the "♪ play music" hint plays once per visit (its CSS animation lasts ~10 s)
+  window.setTimeout(() => {
+    player.dataset.hinted = '';
+    try {
+      sessionStorage.setItem(HINTED_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  }, 11000);
+
   const host = player.querySelector<HTMLElement>('.player__embed')!;
   let tracks: Track[] | null = null;
   let ready: Promise<EmbedController> | null = null;
@@ -94,6 +114,9 @@ function init(player: HTMLElement) {
 
   function onUpdate(e: PlaybackUpdate) {
     const { isPaused, duration, position } = e.data;
+    // Spotify serves 30-second previews when it can't see a login (not logged in, or the browser keeps
+    // the site's Spotify iframe separate from spotify.com). Only then do we show the hint.
+    if (duration > 0) player.toggleAttribute('data-preview', duration <= 31000);
     if (!isPaused && player.dataset.state !== 'closed') setState('playing');
     const nearEnd = duration > 0 && position >= duration - 900;
     const justEnded = isPaused && position === 0 && lastDuration > 0 && lastPosition >= lastDuration - 2500;
@@ -153,6 +176,14 @@ function init(player: HTMLElement) {
   document.addEventListener('click', (e) => {
     const toggle = (e.target as Element).closest?.('.sound-toggle');
     if (!toggle) return;
+    if (!('known' in player.dataset)) {
+      player.dataset.known = '';
+      try {
+        localStorage.setItem(KNOWN_KEY, '1');
+      } catch {
+        /* ignore */
+      }
+    }
     const state = player.dataset.state;
     if (!controller) void start();
     else if (state === 'playing' || state === 'loading') {

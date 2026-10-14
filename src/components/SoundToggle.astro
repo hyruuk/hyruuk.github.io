@@ -1,6 +1,8 @@
 ---
 /**
- * The little wave from the mockup = the music toggle. The player itself lives in #player
+ * The little wave from the mockup = the music toggle. Until a visitor has used it once, it gently
+ * "breathes" and, on the home panel, a small "♪ play music" hint fades in once per visit
+ * (#player[data-known] / [data-hinted], set by src/scripts/player.ts). The player itself lives in #player
  * (src/components/Player.astro), outside the swapped page, so it keeps playing across pages.
  */
 import { t, type Lang } from '../i18n/utils';
@@ -26,6 +28,7 @@ const { lang } = Astro.props;
         <path d="M0 10c4 0 4-7 8-7s4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 7 8 7" />
       </g>
     </svg>
+    <span class="sound-hint" aria-hidden="true">♪ {t(lang, 'sound.hint')}</span>
   </button>
   <div class="spectrum" aria-hidden="true"><i></i><i></i><i></i></div>
 </div>

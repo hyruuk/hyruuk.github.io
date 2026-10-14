@@ -4,12 +4,14 @@ import { render } from 'astro:content';
 import Chips from '../components/Chips.astro';
 import EventList from '../components/EventList.astro';
 import Icon from '../components/Icon.astro';
+import LoopVideo from '../components/LoopVideo.astro';
 import MediaEmbed from '../components/MediaEmbed.astro';
 import ProjectTile from '../components/ProjectTile.astro';
 import PubList from '../components/PubList.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { formatSpan, localize, t, type Lang } from '../i18n/utils';
 import { eventsOfProject, getKeywords, getProject, publicationsOfProject, relatedProjects } from '../lib/content';
+import { text } from '../lib/data';
 
 interface Props {
   lang: Lang;
@@ -47,14 +49,19 @@ const roomLabel = p.room === 'community' ? t(lang, 'room.community') : t(lang, `
           p.data.cover && (
             <figure class={`project__cover project__cover--${p.room} reveal`}>
               <div class="tile__media" data-morph={p.id}>
-                <Picture
-                  src={p.data.cover}
-                  alt={p.coverAlt ?? ''}
-                  widths={[640, 960, 1400]}
-                  sizes="(max-width: 1023px) 92vw, 760px"
-                  formats={['avif', 'webp']}
-                  loading="eager"
-                />
+                {p.data.coverVideo ? (
+                  <LoopVideo src={p.data.coverVideo} poster={p.data.cover} label={p.coverAlt ?? p.title} lang={lang} />
+                ) : (
+                  <Picture
+                    src={p.data.cover}
+                    alt={p.coverAlt ?? ''}
+                    widths={[640, 960, 1400]}
+                    sizes="(max-width: 1023px) 92vw, 760px"
+                    formats={p.data.cover.format === 'gif' ? ['webp'] : ['avif', 'webp']}
+                    loading="eager"
+                    style={p.data.coverFocus ? `object-position:${p.data.coverFocus}` : undefined}
+                  />
+                )}
               </div>
               {p.data.coverCredit && <figcaption class="list__sub">{p.data.coverCredit}</figcaption>}
             </figure>
@@ -66,6 +73,38 @@ const roomLabel = p.room === 'community' ? t(lang, 'room.community') : t(lang, `
         <div class="prose reveal" lang={p.translated ? undefined : 'en'}>
           <Content />
         </div>
+
+        {
+          p.data.figures.length > 0 && (
+            <div class="figures">
+              {p.data.figures.map((f) => (
+                <figure class={`figure figure--${f.style} reveal`}>
+                  {f.video ? (
+                    <div class="figure__media">
+                      <LoopVideo src={f.video} poster={f.src} label={text(f.alt, lang)} lang={lang} />
+                    </div>
+                  ) : (
+                    <a class="figure__media" href={f.src.src} target="_blank" rel="noopener" aria-label={`${text(f.alt, lang)} — ${t(lang, 'project.fullSize')}`}>
+                      <Picture
+                        src={f.src}
+                        alt={text(f.alt, lang)}
+                        widths={[480, 760, 1200, 1600].filter((w) => w <= f.src.width).concat(f.src.width < 480 ? [f.src.width] : [])}
+                        sizes={f.style === 'wide' ? '(max-width: 1023px) 92vw, 1100px' : f.style === 'small' ? '360px' : '(max-width: 1023px) 92vw, 760px'}
+                        formats={f.src.format === 'gif' ? ['webp'] : ['avif', 'webp']}
+                      />
+                    </a>
+                  )}
+                  {(f.caption || f.credit) && (
+                    <figcaption>
+                      {f.caption && <span class="figure__caption">{text(f.caption, lang)}</span>}
+                      {f.credit && <span class="figure__credit">{f.credit}</span>}
+                    </figcaption>
+                  )}
+                </figure>
+              ))}
+            </div>
+          )
+        }
 
         {p.data.media.map((m) => <MediaEmbed kind={m.kind} id={m.id} title={m.title} lang={lang} />)}
 

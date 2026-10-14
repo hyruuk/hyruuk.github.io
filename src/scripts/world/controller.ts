@@ -49,6 +49,15 @@ function init(world: HTMLElement) {
   const looks: Record<string, Look> = JSON.parse(world.dataset.looks!);
   const tiers: Tier[] = JSON.parse(world.dataset.tiers!);
   const unitsW = Number(world.dataset.unitsW);
+  const unitsH = Number(world.dataset.unitsH);
+  const stars = world.querySelector<HTMLElement>('.world-stars');
+  let starAnim: Animation | null = null;
+  /** Far-away stars drift slowly as the camera travels (parallax), and barely grow when it zooms. */
+  const starTransform = (view: number[]) =>
+    `translate(${(-(view[0] - unitsW / 2) * 0.14).toFixed(1)}px,${(-(view[1] - unitsH / 2) * 0.14).toFixed(1)}px) scale(${Math.pow(unitsW / view[2], 0.07).toFixed(4)})`;
+  const placeStars = (c: Cam) => {
+    if (stars) stars.style.transform = starTransform(cameraToView(c, innerWidth, innerHeight));
+  };
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const touch = matchMedia('(hover: none), (pointer: coarse)');
 
@@ -93,7 +102,12 @@ function init(world: HTMLElement) {
 
   /* ---------- the flight ---------- */
 
-  const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  /**
+   * "Smootherstep": zero speed *and* zero acceleration at both ends, so the camera eases out of rest
+   * and settles without a jolt; its peak speed is ~1.9× the average (a cubic ease-in-out peaks at 3×,
+   * which made the middle of a flight feel rushed).
+   */
+  const ease = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
 
   /** Move the camera to the current page's place. Returns the flight duration (0 = instant). */
   function fly(): number {
@@ -101,7 +115,10 @@ function init(world: HTMLElement) {
     const from = current();
     flight?.cancel();
     flight = null;
+    starAnim?.cancel();
+    starAnim = null;
     cam.style.transform = cameraTransform(from);
+    placeStars(from);
     const vw = innerWidth;
     const vh = innerHeight;
 
@@ -119,13 +136,29 @@ function init(world: HTMLElement) {
     }
 
     const path = zoomPath(a as [number, number, number], b as [number, number, number]);
-    const duration = Math.min(1400, Math.max(700, path.duration * 0.7));
-    const steps = Math.max(16, Math.round(duration / 16));
+    const duration = Math.min(1700, Math.max(900, path.duration * 0.85));
+    // ~100 samples per second, smooth on 120 Hz screens too (WAAPI interpolates linearly between them)
+    const steps = Math.max(24, Math.round(duration / 10));
     const keyframes: Keyframe[] = [];
+    const starFrames: Keyframe[] = [];
     for (let i = 0; i <= steps; i++) {
-      keyframes.push({ transform: cameraTransform(viewToCamera(path(easeInOut(i / steps)), vw, vh)) });
+      const view = path(ease(i / steps));
+      keyframes.push({ transform: cameraTransform(viewToCamera(view, vw, vh)) });
+      starFrames.push({ transform: starTransform(view) });
     }
     const f = cam.animate(keyframes, { duration, easing: 'linear', fill: 'both' });
+    if (stars) {
+      const sa = stars.animate(starFrames, { duration, easing: 'linear', fill: 'both' });
+      starAnim = sa;
+      sa.finished
+        .then(() => {
+          if (starAnim !== sa) return;
+          stars.style.transform = String(starFrames[starFrames.length - 1].transform);
+          sa.cancel();
+          starAnim = null;
+        })
+        .catch(() => {});
+    }
     flight = f;
     world!.dataset.flying = '';
     f.finished
@@ -148,6 +181,7 @@ function init(world: HTMLElement) {
   function settle(c: Cam) {
     void ensureTier(c.s);
     placeLabels(c);
+    if (!starAnim) placeStars(c);
     syncHotspots();
   }
 
@@ -282,7 +316,7 @@ function init(world: HTMLElement) {
       }
     };
     if (!duration) reveal();
-    else revealTimer = window.setTimeout(reveal, duration * 0.62);
+    else revealTimer = window.setTimeout(reveal, duration * 0.55);
   });
 
   /* ---------- resize ---------- */
@@ -296,6 +330,8 @@ function init(world: HTMLElement) {
         flight = null;
         delete world.dataset.flying;
       }
+      starAnim?.cancel();
+      starAnim = null;
       const to = target();
       cam.style.transform = cameraTransform(to);
       settle(to);

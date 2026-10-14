@@ -23,7 +23,7 @@ const outreach = (await getEvents()).filter((e) => ['media', 'teaching', 'organi
         <header class="page-intro reveal">
           <p class="eyebrow">{pick(site.position, lang)}</p>
           <h1 class="page-title" tabindex="-1">{t(lang, 'about.title')}</h1>
-          <p class="epigraph">“{pick(site.quote, lang)}”</p>
+          {pick(site.quote, lang) && <p class="epigraph">“{pick(site.quote, lang)}”</p>}
         </header>
         <div class="prose reveal">
           <Content />

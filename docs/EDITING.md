@@ -94,6 +94,7 @@ Give a paper or a talk a **project** (its folder name) and it automatically show
 | hide an item without deleting it | `draft: true` (project) — it stays out of the live site |
 | edit a project's text or links | `src/content/projects/<name>/en.md` (and `fr.md`) |
 | add a cover image to a project | put `cover.jpg` next to `en.md`, add `cover: ./cover.jpg` and `coverAlt: …` |
+| add figures, GIFs or short videos to a project | `figures:` in its `en.md` (section 5, "Images, figures and animations") |
 | change the HYRUUK words | `src/data/hyruuk.yaml` |
 | add or remap a place | `src/content/keywords.yaml` + draw it (section 7) |
 | translate interface words | `src/i18n/ui.ts` |
@@ -132,6 +133,39 @@ The story of the project, in Markdown: **bold**, *italics*, [links](https://…)
 - Papers and talks are **not** listed in the project file: they point to the project (`projects: [folder]`) and
   appear on its page automatically.
 - Embedded players (`media:`) only load when a visitor clicks them.
+
+### Images, figures and animations
+
+Put image files next to `en.md`; the site makes every size and format it needs (AVIF/WebP) when it builds.
+
+```yaml
+cover: ./cover.png                 # the tile picture (circle for research, 16:10 for code, 4:5 for art & music)
+coverAlt: What the picture shows   # for screen readers
+coverCredit: "Adapted from Fig. 3 of Doe et al. (2026) — CC BY 4.0"   # optional, shown under the cover
+coverFocus: "50% 30%"              # optional: which part to keep when a tile crops it (left→right, top→bottom)
+coverVideo: /media/<folder>/loop.mp4   # optional silent loop: plays on the project page, and on hover in tiles
+figures:                           # shown after the text, in this order
+  - src: ./figure1.png
+    alt: What the figure shows                          # or  alt: { en: "…", fr: "…" }
+    caption:
+      en: "One or two sentences."
+      fr: "Une ou deux phrases."
+    credit: "Doe et al. (2026), Journal, Fig. 1 — CC BY 4.0"   # optional
+    style: plate      # normal (default) · wide (full width) · plate (white backing, for paper figures) · small
+  - src: ./demo.png                 # a still frame…
+    video: /media/<folder>/demo.mp4 # …and the silent loop that replaces it
+    alt: What the animation shows
+```
+
+- **GIFs work** as `src:` (the site keeps them animated). Long or large GIFs are much lighter as MP4 videos: put the
+  video in `public/media/<folder>/` and convert it with
+  `ffmpeg -i demo.gif -an -vf "fps=25,format=yuv420p" -c:v libx264 -crf 26 -movflags +faststart demo.mp4`
+  (and `ffmpeg -i demo.mp4 -frames:v 1 demo.png` for the still frame).
+- Videos play muted and loop, only while they are on screen, never for visitors who ask their system for reduced
+  motion, and always with a pause button.
+- **Licences:** figures from open-access papers under CC BY can be used and adapted with a credit (say "adapted" if
+  you cropped or recoloured them). CC BY-NC-ND figures may only be shown unchanged. Third-party posters and photos need
+  the owner's permission.
 
 ## 6. Papers, talks and other entries
 
@@ -174,7 +208,9 @@ The French texts were written in neutral form; adjust them to your taste.
   start with their letter.
 - **Music**: the wave plays random tracks from `public/data/liked-tracks.json`. To refresh it, export your playlist
   as CSV with [Exportify](https://exportify.app), then `npm run spotify -- ~/Downloads/Liked_Songs.csv` and commit.
-  (Visitors not logged in to Spotify hear 30-second previews — a Spotify rule.)
+  (Visitors not logged in to Spotify hear 30-second previews — a Spotify rule; the player then shows a short note.
+  Spotify's player has no volume control, so the music cannot fade in.) Until a visitor first uses it, the wave gently
+  "breathes" and a small "♪ play music" hint appears once per visit.
 - **Brains & Games**: paste the permanent invite link in `site.yaml → discord.invite`; the description is in
   `src/content/projects/brains-and-games/en.md` / `fr.md`. For a live "N online" count, enable the server widget in
   Discord (Server Settings → Widget) and put the server ID in `discord.serverId`.

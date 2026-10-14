@@ -1,6 +1,7 @@
 ---
 title: SAflow — les vagues de l'attention
 summary: Pourquoi l'attention fluctue-t-elle ? Des enregistrements MEG pendant une tâche d'attention soutenue relient la performance, d'instant en instant, à l'activité cérébrale rythmique et arythmique (apériodique).
+coverAlt: Un cerveau vu du dessus, ses 400 régions corticales dessinées comme des points colorés reliés par de fines courbes
 ---
 
 Même avec un effort de concentration soutenu, la performance oscille entre des périodes stables, « dans la zone », et

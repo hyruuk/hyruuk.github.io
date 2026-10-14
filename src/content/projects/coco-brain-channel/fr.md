@@ -1,6 +1,7 @@
 ---
 title: CoCo Brain Channel
 summary: La sonification en temps réel des ondes cérébrales — un casque EEG mobile pilote un système de musique générative, pour entendre, et jouer avec, sa propre activité cérébrale.
+coverAlt: "Visuel de CoCo Brain Channel : un cerveau lumineux portant un casque audio au-dessus de deux haut-parleurs, avec les mots brain data sonification, EEG/AI/HI"
 ---
 
 CoCo Brain Channel a été ma première machine cerveau-musique, construite au CoCo Lab de Karim Jerbi avec Antoine

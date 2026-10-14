@@ -11,6 +11,19 @@ links:
   - { label: "Videos", url: "https://www.youtube.com/playlist?list=PLMu36WzSQKiVeBnrUdwUAoUhqLqGX3_bw", kind: video }
 media:
   - { kind: youtube, id: c55yhkRjims, title: "ReTiNA-Cinema demo" }
+cover: ./cover.jpg
+coverAlt: A frame of the film transformed by the generative model into a surreal painting of a giant figure lying by the sea
+coverCredit: Frame from the ReTiNA-Cinema demo (Kairos ~ Hive), sharpened for display
+figures:
+  - src: ./poster.jpg
+    style: wide
+    alt:
+      en: The NeurIPS 2024 poster, with the EEG feature extractor, the generative pipeline, the software patches and original versus augmented film frames
+      fr: L'affiche NeurIPS 2024, avec l'extraction des mesures EEG, la chaîne générative, les patchs logiciels et des images de films originales et augmentées
+    caption:
+      en: "The NeurIPS 2024 poster: EEG complexity, computed in goofi-pipe, moves StreamDiffusion between two prompts while TouchDesigner remixes the film."
+      fr: "L'affiche NeurIPS 2024 : la complexité de l'EEG, calculée dans goofi-pipe, fait glisser StreamDiffusion entre deux prompts pendant que TouchDesigner remixe le film."
+    credit: Poster by Bellemare-Pepin, Thölke, Harel & Jerbi, NeurIPS 2024 Creative AI workshop
 ---
 
 What if a film could see how you see it? ReTiNA-Cinema measures the complexity of a viewer's EEG in real time and uses

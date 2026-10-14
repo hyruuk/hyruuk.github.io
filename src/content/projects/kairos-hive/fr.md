@@ -1,6 +1,7 @@
 ---
 title: Kairos ~ Hive
 summary: Le collectif art-science que j'ai cofondé — scientifiques, artistes, facilitation et design autour de l'art bio-adaptatif, d'outils ouverts et d'expériences.
+coverAlt: Le logo de Kairos ~ Hive, une lettre K dessinée avec un sablier, des circuits et une feuille
 ---
 
 Kairos ~ Hive est un collectif transdisciplinaire — *harvesting synchronicities* — où se rencontrent science, art et

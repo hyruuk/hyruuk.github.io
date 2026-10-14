@@ -61,4 +61,16 @@
   .room__arrow {
     transition: none !important;
   }
+
+  /* the sound cue: no breathing or swelling; the hint simply stays visible until first use */
+  .wave__still,
+  .wave__live path,
+  .sound-toggle::after {
+    animation: none !important;
+  }
+
+  html:has(#player[data-state='idle']:not([data-known])) .panel--full .sound-hint {
+    animation: none;
+    opacity: 0.7;
+  }
 }

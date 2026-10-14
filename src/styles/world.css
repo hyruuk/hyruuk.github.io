@@ -22,6 +22,7 @@
 .world-picture,
 .world-img,
 .world-blur,
+.world-lqip,
 .hotspot-layer,
 .hotspots {
   position: absolute;
@@ -30,21 +31,144 @@
   height: 100%;
 }
 
-.world-img {
-  opacity: 0;
+/* ---------- the infinite universe around the painting ----------
+   Behind the art: a blurred, mirrored "aura" of it (2.5× its size) and faint flux lines (4×),
+   both moving with the camera; further behind, a starfield drifting with parallax. */
+
+.world-aura,
+.world-flux {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+}
+
+.world-aura {
+  left: -75%;
+  top: -75%;
+  width: 250%;
+  height: 250%;
+}
+
+.world-flux {
+  left: -150%;
+  top: -150%;
+  width: 400%;
+  height: 400%;
+  opacity: 0.85;
+  animation: flux-breathe 14s ease-in-out infinite alternate;
+}
+
+@keyframes flux-breathe {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.world-stars {
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 38% 30% at 12% 78%, rgba(114, 115, 238, 0.07), transparent 70%),
+    radial-gradient(ellipse 30% 26% at 88% 18%, rgba(238, 100, 158, 0.05), transparent 70%),
+    radial-gradient(ellipse 34% 28% at 78% 86%, rgba(0, 157, 241, 0.05), transparent 70%),
+    radial-gradient(0.8px 0.8px at 82px 38px, rgba(190,255,250,0.47) 45%, transparent 100%),
+    radial-gradient(0.89px 0.89px at 24px 93px, rgba(200,220,255,0.9) 45%, transparent 100%),
+    radial-gradient(0.82px 0.82px at 9px 22px, rgba(255,255,255,0.48) 45%, transparent 100%),
+    radial-gradient(0.63px 0.63px at 141px 108px, rgba(200,220,255,0.73) 45%, transparent 100%),
+    radial-gradient(0.89px 0.89px at 161px 160px, rgba(190,255,250,0.48) 45%, transparent 100%),
+    radial-gradient(1.09px 1.09px at 101px 12px, rgba(200,220,255,0.47) 45%, transparent 100%),
+    radial-gradient(0.67px 0.67px at 74px 107px, rgba(170,190,255,0.51) 45%, transparent 100%),
+    radial-gradient(0.83px 0.83px at 286px 349px, rgba(200,220,255,0.74) 45%, transparent 100%),
+    radial-gradient(1.08px 1.08px at 190px 49px, rgba(255,255,255,0.48) 45%, transparent 100%),
+    radial-gradient(1.05px 1.05px at 316px 105px, rgba(170,190,255,0.72) 45%, transparent 100%),
+    radial-gradient(1.35px 1.35px at 238px 299px, rgba(200,220,255,0.63) 45%, transparent 100%),
+    radial-gradient(1.25px 1.25px at 92px 357px, rgba(170,190,255,0.49) 45%, transparent 100%),
+    radial-gradient(1.31px 1.31px at 268px 253px, rgba(170,190,255,0.81) 45%, transparent 100%),
+    radial-gradient(0.78px 0.78px at 311px 37px, rgba(170,190,255,0.66) 45%, transparent 100%),
+    radial-gradient(1.24px 1.24px at 155px 500px, rgba(255,255,255,0.93) 45%, transparent 100%),
+    radial-gradient(1.17px 1.17px at 571px 321px, rgba(255,215,240,0.63) 45%, transparent 100%),
+    radial-gradient(1.57px 1.57px at 467px 70px, rgba(255,215,240,0.92) 45%, transparent 100%),
+    radial-gradient(1.48px 1.48px at 66px 62px, rgba(190,255,250,0.6) 45%, transparent 100%),
+    radial-gradient(1.47px 1.47px at 456px 291px, rgba(170,190,255,0.89) 45%, transparent 100%),
+    radial-gradient(1.18px 1.18px at 23px 472px, rgba(255,215,240,0.76) 45%, transparent 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 233px 233px, 233px 233px, 233px 233px, 233px 233px, 233px 233px, 233px 233px, 233px 233px, 389px 389px, 389px 389px, 389px 389px, 389px 389px, 389px 389px, 389px 389px, 389px 389px, 577px 577px, 577px 577px, 577px 577px, 577px 577px, 577px 577px, 577px 577px;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+}
+
+.world-stars__twinkle {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.94px 1.94px at 60px 223px, rgba(200,220,255,.95) 40%, transparent 100%),
+    radial-gradient(1.67px 1.67px at 253px 407px, rgba(255,215,240,.95) 40%, transparent 100%),
+    radial-gradient(1.71px 1.71px at 82px 170px, rgba(190,255,250,.95) 40%, transparent 100%),
+    radial-gradient(1.97px 1.97px at 284px 140px, rgba(190,255,250,.95) 40%, transparent 100%),
+    radial-gradient(2.09px 2.09px at 285px 425px, rgba(255,215,240,.95) 40%, transparent 100%),
+    radial-gradient(1.46px 1.46px at 236px 154px, rgba(200,220,255,.95) 40%, transparent 100%);
+  background-size: 701px 701px, 701px 701px, 701px 701px, 701px 701px, 701px 701px, 701px 701px;
+  animation: twinkle 7s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  from {
+    opacity: 0.15;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
+
+.world-lqip {
+  background-size: 100% 100%;
   transition: opacity 0.7s ease;
-  /* fade the edges into the page background; the right edge is the hard cut of the mockup on the
-     home page and a soft fade elsewhere */
-  --edge-r: 6%;
+}
+
+#world[data-loaded] .world-lqip {
+  opacity: 0;
+}
+
+.world-img,
+.world-lqip,
+.world-blur {
+  /* the painting slowly dissolves into the universe on every side (eased, so it never shows a line) */
   mask-image:
-    linear-gradient(to bottom, transparent 0, #000 7%, #000 91%, transparent 100%),
-    linear-gradient(to right, transparent 0, #000 3%, #000 calc(100% - var(--edge-r)), transparent 100%);
+    linear-gradient(
+      to bottom,
+      transparent 0,
+      rgba(0, 0, 0, 0.18) 3%,
+      rgba(0, 0, 0, 0.5) 6.5%,
+      rgba(0, 0, 0, 0.82) 10%,
+      #000 14%,
+      #000 86%,
+      rgba(0, 0, 0, 0.82) 90%,
+      rgba(0, 0, 0, 0.5) 93.5%,
+      rgba(0, 0, 0, 0.18) 97%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to right,
+      transparent 0,
+      rgba(0, 0, 0, 0.18) 2.5%,
+      rgba(0, 0, 0, 0.5) 5.5%,
+      rgba(0, 0, 0, 0.82) 9%,
+      #000 12.5%,
+      #000 87.5%,
+      rgba(0, 0, 0, 0.82) 91%,
+      rgba(0, 0, 0, 0.5) 94.5%,
+      rgba(0, 0, 0, 0.18) 97.5%,
+      transparent 100%
+    );
   mask-composite: intersect;
   -webkit-mask-composite: source-in;
 }
 
-html[data-stage='home'] .world-img {
-  --edge-r: 0.15%;
+.world-img {
+  opacity: 0;
+  transition: opacity 0.7s ease;
 }
 
 #world[data-loaded] .world-img,
@@ -52,20 +176,10 @@ html[data-stage='home'] .world-img {
   opacity: 1;
 }
 
-/* the blurry placeholder is not masked like the image: drop it once the real art is there */
-#world[data-loaded] .world-camera {
-  background-image: none !important;
-  transition: background-image 0s 0.7s;
-}
 
 .world-blur {
   opacity: 0;
   pointer-events: none;
-  mask-image:
-    linear-gradient(to bottom, transparent 0, #000 9%, #000 89%, transparent 100%),
-    linear-gradient(to right, transparent 0, #000 4%, #000 92%, transparent 100%);
-  mask-composite: intersect;
-  -webkit-mask-composite: source-in;
 }
 
 .world-dim,
@@ -329,7 +443,9 @@ html:not([data-stage='home']) .place-label,
   }
 
   #world.is-hinting .hotspot-area,
-  .place-label__dot {
+  .place-label__dot,
+  .world-flux,
+  .world-stars__twinkle {
     animation: none !important;
   }
 }

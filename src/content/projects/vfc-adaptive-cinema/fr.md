@@ -1,6 +1,7 @@
 ---
 title: V F C — cinéma adaptatif
 summary: Un long métrage d'horreur dont la bande-son s'adapte en temps réel à l'activité cérébrale de chaque spectateur et spectatrice, grâce à l'EEG et à des écouteurs à conduction osseuse.
+coverAlt: "L'affiche de V F C : la silhouette noire d'une tête à l'oreille lumineuse, du papier orange déchiré et la phrase « Lend an ear. Lose your mind. »"
 ---
 
 *V F C* est un long métrage d'horreur adaptatif de 98 minutes réalisé par Charles Stéphane Roy, avec Elisapie Isaac.

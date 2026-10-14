@@ -4,7 +4,7 @@
  * If something is wrong (a misspelled keyword, a missing field…), `npm run build` stops with a
  * message naming the file and the field. See docs/EDITING.md → "When a build fails".
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { defineCollection, reference } from 'astro:content';
 import { file, glob } from 'astro/loaders';
 import { z } from 'astro/zod';
@@ -44,6 +44,12 @@ const Link = z.object({
     .enum(['paper', 'preprint', 'code', 'data', 'video', 'audio', 'demo', 'website', 'slides', 'poster', 'docs', 'other'])
     .default('other'),
 });
+
+/** a silent looping video in public/media/…, e.g. "/media/ezbv/rotation.mp4" */
+const VideoPath = z
+  .string()
+  .regex(/^\/media\/[\w./-]+\.(mp4|webm)$/, { error: 'videos live in public/media/ and end in .mp4 or .webm' })
+  .refine((p) => existsSync(`public${p}`), { error: 'video file not found in public/' });
 
 const Media = z.object({
   kind: z.enum(['youtube', 'vimeo', 'spotify', 'soundcloud']),
@@ -85,6 +91,26 @@ const projects = defineCollection({
         cover: image().optional(),
         coverAlt: z.string().optional(),
         coverCredit: z.string().optional(),
+        /** optional silent loop over the cover: plays on the project page, and on hover in tiles */
+        coverVideo: VideoPath.optional(),
+        /** which part of the cover to keep when a tile crops it (CSS object-position, e.g. "50% 30%") */
+        coverFocus: z.string().regex(/^\d{1,3}% \d{1,3}%$/, { error: 'coverFocus looks like "50% 30%"' }).optional(),
+        /** figures shown after the text: images next to en.md (PNG, JPG, WebP or animated GIF) */
+        figures: z
+          .array(
+            z.object({
+              /** the image (for a video: its still frame) */
+              src: image(),
+              /** optional silent loop played in place of the image */
+              video: VideoPath.optional(),
+              alt: z.union([z.string(), Localized], { error: 'alt: describe the figure for screen readers' }),
+              caption: z.union([z.string(), Localized]).optional(),
+              credit: z.string().optional(),
+              /** "wide" spans the page, "plate" puts a white backing behind it, "small" keeps it narrow */
+              style: z.enum(['normal', 'wide', 'plate', 'small']).default('normal'),
+            }),
+          )
+          .default([]),
         weight: z.number().int().min(1).max(3).default(1),
         featured: z.boolean().default(false),
         role: z.string().optional(),
@@ -102,6 +128,10 @@ const projects = defineCollection({
       .refine((p) => !p.cover || !!p.coverAlt, {
         error: 'coverAlt: describe the cover image for screen readers',
         path: ['coverAlt'],
+      })
+      .refine((p) => !p.coverVideo || !!p.cover, {
+        error: 'coverVideo needs a cover image too (shown before the video plays)',
+        path: ['coverVideo'],
       }),
 });
 

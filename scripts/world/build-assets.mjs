@@ -22,6 +22,7 @@ const UNITS = [1210, 900];
 const WIDTHS = [1210, 1815, 2420, 3630, 4840];
 
 const args = process.argv.slice(2);
+const only = args.find((a) => a.startsWith('--only='))?.slice(7); // e.g. --only=aura (keep the existing tiers)
 const importIdx = args.indexOf('--import');
 if (importIdx !== -1) {
   const src = args[importIdx + 1];
@@ -39,6 +40,63 @@ if (!existsSync(MASTER)) throw new Error(`Missing ${MASTER}. Run with --import <
 const masterBuf = readFileSync(MASTER);
 const hash = createHash('sha256').update(masterBuf).digest('hex').slice(0, 8);
 const { width: mw, height: mh } = await sharp(masterBuf).metadata();
+
+/**
+ * The "aura": a blurred, mirrored extension of the artwork with soft transparent edges. It sits
+ * behind the art (2.5× its size) so the picture seems to continue and slowly dissolve into an
+ * infinite universe instead of ending at a frame. Two blur levels: close to the art the extension
+ * is only slightly out of focus, further away it melts into colour fields, then into the void.
+ */
+async function buildAura() {
+  const AW = 600;
+  const AH = Math.round((AW * mh) / mw);
+  const padX = Math.round(AW * 0.75);
+  const padY = Math.round(AH * 0.75);
+  const W2 = AW + 2 * padX;
+  const H2 = AH + 2 * padY;
+  const core = await sharp(masterBuf).resize(AW, AH).toBuffer();
+  const extended = await sharp(core)
+    .extend({ top: padY, bottom: padY, left: padX, right: padX, extendWith: 'mirror' })
+    .toBuffer();
+  const far = await sharp(extended).blur(42).modulate({ saturation: 1.3, brightness: 0.85 }).toBuffer();
+  const near = await sharp(extended).blur(11).modulate({ saturation: 1.15, brightness: 0.95 }).raw().toBuffer({ resolveWithObject: true });
+  // the near (sharper) layer only lives in a soft band around the art
+  const nearMask = await sharp(
+    Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${W2}" height="${H2}"><defs><filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${Math.round(AW * 0.07)}"/></filter></defs><rect width="100%" height="100%" fill="#000"/><rect x="${padX - AW * 0.06}" y="${padY - AH * 0.06}" width="${AW * 1.12}" height="${AH * 1.12}" rx="${AW * 0.08}" fill="#fff" filter="url(#b)"/></svg>`,
+    ),
+  )
+    .resize(W2, H2)
+    .extractChannel(0)
+    .raw()
+    .toBuffer();
+  const nearRgba = await sharp(near.data, { raw: near.info })
+    .removeAlpha()
+    .joinChannel(nearMask, { raw: { width: W2, height: H2, channels: 1 } })
+    .png()
+    .toBuffer();
+  const layered = await sharp(far).composite([{ input: nearRgba }]).toBuffer();
+  // elliptical alpha: opaque around the art, fading to nothing far away
+  const mask = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W2}" height="${H2}"><defs><radialGradient id="g" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".45" stop-color="#fff" stop-opacity=".9"/><stop offset=".72" stop-color="#fff" stop-opacity=".3"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#g)"/></svg>`,
+  );
+  const name = `world-${hash}-aura.webp`;
+  await sharp(layered)
+    .ensureAlpha()
+    .composite([{ input: mask, blend: 'dest-in' }])
+    .webp({ quality: 74, alphaQuality: 80, effort: 6 })
+    .toFile(join(OUT_DIR, name));
+  return `/world/${name}`;
+}
+
+if (only === 'aura') {
+  const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
+  for (const f of readdirSync(OUT_DIR)) if (f.endsWith('-aura.webp')) rmSync(join(OUT_DIR, f));
+  manifest.aura = await buildAura();
+  writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2) + '\n');
+  console.log(`aura → ${manifest.aura}`);
+  process.exit(0);
+}
 
 mkdirSync(OUT_DIR, { recursive: true });
 for (const f of readdirSync(OUT_DIR)) if (f.startsWith('world-')) rmSync(join(OUT_DIR, f));
@@ -68,6 +126,7 @@ const manifest = {
   master: [mw, mh],
   tiers,
   blur: `/world/${blurName}`,
+  aura: await buildAura(),
   lqip: `data:image/webp;base64,${lqip.toString('base64')}`,
 };
 writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2) + '\n');

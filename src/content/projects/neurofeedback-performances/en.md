@@ -10,6 +10,9 @@ links:
   - { label: "Numina at Hexagram", url: "https://hexagram.ca/fr/demo10-antoine-bellemare-numina/", kind: website }
 media:
   - { kind: youtube, id: 7iOb3PV1-dQ, title: "Numina" }
+cover: ./cover.jpg
+coverAlt: A still from Numina, a teal nebula of shifting clouds
+coverCredit: Numina, video still — Réseau Hexagram
 ---
 
 - **Numina** (2021) — an audiovisual neurofeedback interface to explore mental states through generative universes,

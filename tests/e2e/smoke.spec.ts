@@ -152,6 +152,32 @@ test('the music player survives navigation', async ({ page }) => {
   await expect(page.locator('#player')).toBeVisible();
 });
 
+test('the wave invites to play music until it has been used once', async ({ page }) => {
+  await stubSpotify(page);
+  await page.goto('/');
+  const player = page.locator('#player');
+  await expect(player).not.toHaveAttribute('data-known');
+  await expect(page.locator('.sound-hint').first()).toBeAttached();
+  await page.locator('.sound-toggle').first().click();
+  await expect(player).toHaveAttribute('data-known', '');
+  await page.reload();
+  await expect(player).toHaveAttribute('data-known', '');
+});
+
+test('looping figures play on screen and can be paused', async ({ page }) => {
+  const errors = watchErrors(page);
+  await page.goto('/projects/saflow/');
+  const wrap = page.locator('.figure .loop-video').first();
+  await wrap.scrollIntoViewIfNeeded();
+  const btn = wrap.locator('.loop-video__toggle');
+  await expect(btn).toHaveAttribute('aria-pressed', 'false');
+  await btn.click();
+  await expect(wrap).toHaveAttribute('data-paused', '');
+  await expect(btn).toHaveAttribute('aria-pressed', 'true');
+  expect(await wrap.locator('video').evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
   test('content and links are there', async ({ page }) => {

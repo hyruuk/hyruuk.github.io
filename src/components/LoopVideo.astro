@@ -1,0 +1,36 @@
+---
+/**
+ * A short silent looping video (an animated figure, a demo): plays only while it is on screen,
+ * never for visitors who prefer reduced motion, and always has a pause button.
+ * Behaviour: src/scripts/loop-video.ts. Files live in public/media/<project>/.
+ */
+import type { ImageMetadata } from 'astro';
+import { getImage } from 'astro:assets';
+import { t, type Lang } from '../i18n/utils';
+
+interface Props {
+  src: string;
+  /** still image shown before the video plays (and instead of it with reduced motion) */
+  poster?: ImageMetadata;
+  label: string;
+  lang: Lang;
+  class?: string;
+}
+const { src, poster, label, lang, class: cls } = Astro.props;
+const posterUrl = poster ? (await getImage({ src: poster, width: Math.min(1400, poster.width), format: 'webp' })).src : undefined;
+---
+
+<div class:list={['loop-video', cls]}>
+  <video src={src} poster={posterUrl} muted loop playsinline preload="none" aria-label={label} data-loop-video></video>
+  <button
+    class="loop-video__toggle"
+    type="button"
+    aria-pressed="false"
+    aria-label={t(lang, 'video.pause')}
+    data-label-pause={t(lang, 'video.pause')}
+    data-label-play={t(lang, 'video.play')}
+  >
+    <svg class="loop-video__pause" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4.5 3v10M11.5 3v10"></path></svg>
+    <svg class="loop-video__play" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M5 3.2v9.6L12.6 8z"></path></svg>
+  </button>
+</div>

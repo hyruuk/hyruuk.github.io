@@ -17,13 +17,19 @@ role:
   fr: Neurosciences cognitives
 
 position:
-  en: Postdoc @ Boston College · Co-founder, Kairos ~ Hive
-  fr: Postdoc @ Boston College · Kairos ~ Hive
+  en: Postdoc @ Boston College (Tomov lab) · Digital Brain Project · Co-founder, Kairos ~ Hive
+  fr: Postdoc @ Boston College (labo Tomov) · Digital Brain Project · Kairos ~ Hive
 
-# The old mockup quote — now shown on the About page (the home panel shows HYRUUK instead).
+# Optional epigraph at the top of the About page — empty = hidden.
+# TODO(Yann): pick one (or write your own). Ideas:
+#   "From brain flux to psychological flow."          (your thesis, as a motto)
+#   "Play is the oldest laboratory."
+#   "I study minds where they come alive: in games, on dance floors, in dark cinemas."
+#   "Every game is an experiment. Every experiment should feel like a game."
+#   "Better to be a curious fool than a closed mind."  (the mockup's line)
 quote:
-  en: Better to be a curious fool than a closed mind.
-  fr: Mieux vaut la folie curieuse que l'esprit fermé.
+  en: ""
+  fr: ""
 
 description:
   en: >-

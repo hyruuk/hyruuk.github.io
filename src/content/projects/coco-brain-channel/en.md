@@ -11,6 +11,9 @@ links:
   - { label: "CogSci 2019 abstract", url: "https://journalpub.escholarship.org/cognitivesciencesociety/article/29181/galley/19052/download/", kind: paper }
   - { label: "INCF 2018 abstract", url: "https://doi.org/10.12751/incf.ni2018.0079", kind: paper }
   - { label: "OHBM 2019 BrainArt entry", url: "https://www.neurobureau.org/terpsichore_coco-brain-channel-neural-sonification_by_karim-jerbi/", kind: website }
+cover: ./cover.jpg
+coverAlt: "CoCo Brain Channel artwork: a glowing brain wearing headphones above two loudspeakers, with the words brain data sonification, EEG/AI/HI"
+coverCredit: CoCo Lab, Université de Montréal (OHBM 2019 BrainArt)
 ---
 
 CoCo Brain Channel was my first brain-music machine, built in Karim Jerbi's CoCo Lab with Antoine Bellemare-Pepin. A
