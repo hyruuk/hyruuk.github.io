@@ -1,0 +1,173 @@
+---
+/**
+ * Region editor — available only during `npm run dev`, at http://localhost:4321/dev/regions/
+ * Draw the clickable places on the artwork, then copy the YAML into src/data/regions.yaml.
+ */
+import { getKeywords } from '../lib/content';
+import { regions, worldImages } from '../lib/data';
+
+const [W, H] = worldImages.units;
+const keywords = await getKeywords();
+const tier = worldImages.tiers.find((t) => t.w >= 2420) ?? worldImages.tiers[worldImages.tiers.length - 1];
+const state = Object.fromEntries(
+  keywords.map((k) => [
+    k.id,
+    {
+      accent: k.data.accent,
+      polygons: regions[k.id]?.polygons ?? [],
+      label: regions[k.id]?.label ?? null,
+      camera: regions[k.id]?.camera ?? null,
+    },
+  ]),
+);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Region editor</title>
+    <style>
+      body { margin: 0; background: #060d14; color: #e9f3f9; font: 14px/1.5 system-ui, sans-serif; display: grid; grid-template-columns: 1fr 420px; height: 100vh; }
+      main { position: relative; overflow: auto; padding: 16px; }
+      .stage { position: relative; width: 100%; max-width: 1600px; aspect-ratio: 1210 / 900; }
+      .stage img, .stage svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+      svg { cursor: crosshair; }
+      aside { border-left: 1px solid #253240; padding: 16px; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+      h1 { font-size: 16px; margin: 0; }
+      select, button { font: inherit; background: #0d1824; color: inherit; border: 1px solid #253240; border-radius: 8px; padding: 6px 10px; }
+      button[aria-pressed='true'] { border-color: #9fd8ff; background: #12324a; }
+      .row { display: flex; flex-wrap: wrap; gap: 6px; }
+      textarea { width: 100%; min-height: 220px; background: #0a131d; color: #cfe; border: 1px solid #253240; border-radius: 8px; font: 12px/1.45 ui-monospace, monospace; padding: 8px; }
+      .help { color: #8b9aab; font-size: 13px; }
+      kbd { background: #16212d; border: 1px solid #253240; border-radius: 4px; padding: 0 4px; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="stage">
+        <img src={tier.webp} alt="" />
+        <svg id="svg" viewBox={`0 0 ${W} ${H}`}></svg>
+      </div>
+    </main>
+    <aside>
+      <h1>Region editor</h1>
+      <p class="help">
+        Pick a place, then click on the art to add points. Click the first point to close a shape.
+        <kbd>Shift</kbd>+click sets the label position; drag with <kbd>Alt</kbd> to draw the camera rectangle
+        (what the place page zooms on). Drag points to move them, <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Z</kbd> to undo.
+      </p>
+      <label>Place <select id="kw"></select></label>
+      <div class="row">
+        <button id="newpoly" type="button">New shape</button>
+        <button id="undo" type="button">Undo point</button>
+        <button id="clear" type="button">Clear this place</button>
+      </div>
+      <p class="help" id="status"></p>
+      <label>YAML for <b id="kwname"></b> — paste over its block in <code>src/data/regions.yaml</code></label>
+      <textarea id="one" readonly></textarea>
+      <div class="row"><button id="copyone" type="button">Copy this place</button><button id="copyall" type="button">Copy all places</button></div>
+      <textarea id="all" readonly></textarea>
+    </aside>
+
+    <script is:inline define:vars={{ state, W, H }}>
+      const svg = document.getElementById('svg');
+      const kwSel = document.getElementById('kw');
+      const ns = 'http://www.w3.org/2000/svg';
+      let current = Object.keys(state)[0];
+      let active = 0; // polygon index being edited
+      let drag = null;
+      let camStart = null;
+      const history = [];
+
+      for (const id of Object.keys(state)) kwSel.append(new Option(id, id));
+      kwSel.onchange = () => { current = kwSel.value; active = Math.max(0, state[current].polygons.length - 1); render(); };
+
+      const toWorld = (e) => {
+        const r = svg.getBoundingClientRect();
+        return [Math.round(((e.clientX - r.left) / r.width) * W), Math.round(((e.clientY - r.top) / r.height) * H)];
+      };
+      const el = (tag, attrs) => { const n = document.createElementNS(ns, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
+      const snapshot = () => history.push(JSON.stringify(state));
+
+      function yamlFor(id) {
+        const s = state[id];
+        const lines = [`${id}:`, '  polygons:'];
+        for (const p of s.polygons) {
+          const pairs = [];
+          for (let i = 0; i < p.length; i += 2) pairs.push(`${p[i]},${p[i + 1]}`);
+          lines.push(`    - [${pairs.join(', ')}]`);
+        }
+        if (!s.polygons.length) lines.push('    []');
+        lines.push(`  label: [${(s.label ?? [0, 0]).join(', ')}]`);
+        const c = s.camera ?? { rect: [0, 0, W, H], fit: 'cover' };
+        const extra = Object.entries(c).filter(([k]) => k !== 'rect').map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ');
+        lines.push(`  camera: { rect: [${c.rect.map(Math.round).join(', ')}]${extra ? ', ' + extra : ''} }`);
+        return lines.join('\n');
+      }
+
+      function render() {
+        svg.replaceChildren();
+        for (const [id, s] of Object.entries(state)) {
+          const sel = id === current;
+          s.polygons.forEach((p, pi) => {
+            const pts = [];
+            for (let i = 0; i < p.length; i += 2) pts.push(`${p[i]},${p[i + 1]}`);
+            svg.append(el('polygon', { points: pts.join(' '), fill: sel ? s.accent + '33' : s.accent + '14', stroke: s.accent, 'stroke-width': sel ? 2 : 1, 'vector-effect': 'non-scaling-stroke' }));
+            if (sel) for (let i = 0; i < p.length; i += 2) {
+              const c = el('circle', { cx: p[i], cy: p[i + 1], r: pi === active ? 6 : 4, fill: i === 0 ? '#fff' : s.accent, stroke: '#000', 'stroke-width': 1, 'data-p': pi, 'data-i': i });
+              c.style.cursor = 'move';
+              svg.append(c);
+            }
+          });
+          if (s.label) svg.append(el('circle', { cx: s.label[0], cy: s.label[1], r: sel ? 9 : 5, fill: 'none', stroke: s.accent, 'stroke-width': 3 }));
+          if (sel && s.camera) {
+            const [x, y, w, h] = s.camera.rect;
+            svg.append(el('rect', { x, y, width: w, height: h, fill: 'none', stroke: '#fff', 'stroke-dasharray': '8 6', 'stroke-width': 1.5, 'vector-effect': 'non-scaling-stroke' }));
+          }
+        }
+        document.getElementById('kwname').textContent = current;
+        document.getElementById('one').value = yamlFor(current);
+        document.getElementById('all').value = Object.keys(state).map(yamlFor).join('\n\n');
+        const s = state[current];
+        document.getElementById('status').textContent = `${s.polygons.length} shape(s), editing shape ${active + 1}` + (s.label ? '' : ' · no label yet') + (s.camera ? '' : ' · no camera yet');
+      }
+
+      svg.addEventListener('pointerdown', (e) => {
+        const t = e.target;
+        const [x, y] = toWorld(e);
+        if (t.dataset && t.dataset.p !== undefined) { snapshot(); drag = { p: +t.dataset.p, i: +t.dataset.i }; svg.setPointerCapture(e.pointerId); return; }
+        if (e.altKey) { snapshot(); camStart = [x, y]; svg.setPointerCapture(e.pointerId); return; }
+        const s = state[current];
+        snapshot();
+        if (e.shiftKey) { s.label = [x, y]; render(); return; }
+        if (!s.polygons[active]) s.polygons[active] = [];
+        const poly = s.polygons[active];
+        if (poly.length >= 6 && Math.hypot(poly[0] - x, poly[1] - y) < 12) { active = s.polygons.length; render(); return; }
+        poly.push(x, y);
+        render();
+      });
+      svg.addEventListener('pointermove', (e) => {
+        const [x, y] = toWorld(e);
+        if (drag) { const p = state[current].polygons[drag.p]; p[drag.i] = x; p[drag.i + 1] = y; render(); }
+        if (camStart) {
+          const s = state[current];
+          const rect = [Math.min(camStart[0], x), Math.min(camStart[1], y), Math.abs(x - camStart[0]), Math.abs(y - camStart[1])];
+          s.camera = Object.assign({ fit: 'cover' }, s.camera, { rect });
+          render();
+        }
+      });
+      svg.addEventListener('pointerup', () => { drag = null; camStart = null; });
+      document.getElementById('newpoly').onclick = () => { active = state[current].polygons.length; render(); };
+      const undo = () => { const prev = history.pop(); if (prev) { Object.assign(state, JSON.parse(prev)); render(); } };
+      document.getElementById('undo').onclick = undo;
+      addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } });
+      document.getElementById('clear').onclick = () => { snapshot(); state[current].polygons = []; active = 0; render(); };
+      document.getElementById('copyone').onclick = () => navigator.clipboard.writeText(document.getElementById('one').value);
+      document.getElementById('copyall').onclick = () => navigator.clipboard.writeText(document.getElementById('all').value);
+      active = Math.max(0, state[current].polygons.length - 1);
+      render();
+    </script>
+  </body>
+</html>

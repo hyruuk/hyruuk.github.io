@@ -1,0 +1,90 @@
+---
+/**
+ * A project tile. Its shape says which room it belongs to:
+ *   research → round "lens" (like the brain-scan insets of the art), code → 16:10 panel,
+ *   art & music → 4:5 poster, community → its own style.
+ * Without a cover image, the tile shows the part of the artwork where the project "lives".
+ */
+import { Picture } from 'astro:assets';
+import { localize, t, type Lang } from '../i18n/utils';
+import type { Project } from '../lib/content';
+import { regions, world, worldImages } from '../lib/data';
+import type { Align, TileSize } from '../lib/compose';
+
+interface Props {
+  project: Project;
+  lang: Lang;
+  size?: TileSize;
+  align?: Align;
+  offset?: number;
+  index?: number;
+  /** headings level for the title */
+  level?: 'h2' | 'h3';
+}
+const { project: p, lang, size = 'M', align, offset = 0, index = 0, level = 'h3' } = Astro.props;
+const Heading = level;
+const room = p.room;
+const href = localize(p.data.href ?? `/projects/${p.id}/`, lang);
+const roomLabel = room === 'community' ? t(lang, 'room.community') : t(lang, `room.${room}.short` as const);
+const end = p.data.end;
+const years =
+  end === 'ongoing'
+    ? `${p.data.start.getUTCFullYear()} –`
+    : end && end.getUTCFullYear() !== p.data.start.getUTCFullYear()
+      ? `${p.data.start.getUTCFullYear()} – ${end.getUTCFullYear()}`
+      : String(p.data.start.getUTCFullYear());
+
+// fallback: the region of the art behind the project's primary place
+const [W, H] = worldImages.units;
+const rect = regions[p.primary]?.camera.rect ?? world.cameras.overview.rect;
+// vary the crop per project so tiles of the same place don't look identical
+let h = 0;
+for (const ch of p.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+const jitter = (n: number) => (((h >>> n) & 255) / 255 - 0.5);
+const zoom = 0.75 + (((h >>> 3) & 255) / 255) * 0.5;
+const rw = Math.min(W, rect[2] * zoom);
+const rh = Math.min(H, rect[3] * zoom);
+const rx = Math.max(0, Math.min(W - rw, rect[0] + rect[2] * 0.5 - rw / 2 + jitter(8) * rect[2] * 0.5));
+const ry = Math.max(0, Math.min(H - rh, rect[1] + rect[3] * 0.5 - rh / 2 + jitter(16) * rect[3] * 0.5));
+const bg = worldImages.tiers.find((t) => t.w >= 1815) ?? worldImages.tiers[0];
+const fallbackStyle = [
+  `background-image:url(${bg.webp})`,
+  `background-size:${((W / rw) * 100).toFixed(1)}% auto`,
+  `background-position:${((rx / Math.max(1, W - rw)) * 100).toFixed(1)}% ${((ry / Math.max(1, H - rh)) * 100).toFixed(1)}%`,
+].join(';');
+const imgWidths = size === 'L' ? [480, 800, 1200] : [360, 640, 960];
+const sizes = size === 'L' ? '(max-width: 767px) 92vw, 30vw' : '(max-width: 767px) 80vw, 22vw';
+---
+
+<a
+  class={`tile tile--${room} reveal`}
+  href={href}
+  data-size={size}
+  data-tile={p.id}
+  data-rooms={p.data.sections.join(' ')}
+  data-keywords={p.data.keywords.join(' ')}
+  style={`--i:${index};${align ? `--tile-align:${align === 'start' ? 'flex-start' : align === 'end' ? 'flex-end' : 'center'};` : ''}${offset ? `--tile-offset:${offset}rem;` : ''}`}
+>
+  <div class="tile__media" data-morph={p.id}>
+    {
+      p.data.cover ? (
+        <Picture
+          src={p.data.cover}
+          alt={p.coverAlt ?? ''}
+          widths={imgWidths}
+          sizes={sizes}
+          formats={['avif', 'webp']}
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div class="tile__fallback" style={fallbackStyle} role="img" aria-label={p.title} />
+      )
+    }
+  </div>
+  <div class="tile__caption">
+    <span class="tile__meta">{roomLabel} · {years}</span>
+    <Heading class="tile__title">{p.title}</Heading>
+    <p class="tile__summary">{p.summary}</p>
+  </div>
+</a>

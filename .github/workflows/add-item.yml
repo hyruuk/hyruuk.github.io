@@ -1,0 +1,81 @@
+# The "New item" form (Issues → New issue → New item) → files → pull request.
+# Only issues opened by the repository owner are processed; the issue text is only ever read as
+# data by scripts/add-item.mjs (never pasted into a shell command).
+name: Add item
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: add-item-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  add:
+    if: contains(github.event.issue.labels.*.name, 'new-item') && github.event.issue.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Turn the issue into files
+        run: node scripts/add-item.mjs --from-issue "$GITHUB_EVENT_PATH" --out "$RUNNER_TEMP/result.json"
+
+      - name: Check that the site still builds
+        run: npm run build
+
+      - name: Commit, then open a pull request (or publish directly)
+        run: |
+          set -euo pipefail
+          title=$(jq -r .title "$RUNNER_TEMP/result.json")
+          url=$(jq -r .url "$RUNNER_TEMP/result.json")
+          publish=$(jq -r .publish "$RUNNER_TEMP/result.json")
+          branch="new-item/issue-$ISSUE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add -A src/content
+          { printf 'Add "%s"\n\nFrom issue #%s.\n' "$title" "$ISSUE"; } > "$RUNNER_TEMP/msg.txt"
+          git commit -F "$RUNNER_TEMP/msg.txt"
+          {
+            printf 'Adds **%s** (from #%s).\n\n' "$title" "$ISSUE"
+            printf -- '- Places: %s\n' "$(jq -r '.keywords | join(", ")' "$RUNNER_TEMP/result.json")"
+            printf -- '- Rooms: %s\n' "$(jq -r '.rooms | join(", ")' "$RUNNER_TEMP/result.json")"
+            jq -r '.files[] | "- File: `" + (sub(".*/(?<f>src/.*)"; "\(.f)")) + "`"' "$RUNNER_TEMP/result.json"
+            printf '\nNotes:\n'
+            jq -r '.notes[] | "- " + .' "$RUNNER_TEMP/result.json"
+            printf '\nMerge to publish (live about 2 minutes later). To adjust, edit the files in this pull request.\n'
+          } > "$RUNNER_TEMP/body.md"
+          if [ "$publish" = "true" ]; then
+            git push origin "HEAD:main"
+            gh workflow run deploy.yml --ref main
+            gh issue close "$ISSUE" --comment "Published ✓ — it will be live at https://${GITHUB_REPOSITORY_OWNER}.github.io${url} in about 2 minutes."
+          else
+            git push --force origin "$branch"
+            if gh pr view "$branch" > /dev/null 2>&1; then
+              gh pr edit "$branch" --body-file "$RUNNER_TEMP/body.md"
+            else
+              gh pr create --base main --head "$branch" --title "Add: $title" --body-file "$RUNNER_TEMP/body.md"
+            fi
+            pr=$(gh pr view "$branch" --json url --jq .url)
+            gh issue close "$ISSUE" --comment "Ready for review: $pr — merge it to publish."
+          fi
+
+      - name: Report a failure on the issue
+        if: failure()
+        run: gh issue comment "$ISSUE" --body "Sorry, I could not add this item. See the log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

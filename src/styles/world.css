@@ -1,0 +1,345 @@
+/* ============ the world (artwork layer) ============ */
+
+#world {
+  position: fixed;
+  inset: 0;
+  height: 100lvh;
+  z-index: 0;
+  overflow: hidden;
+  background: var(--bg);
+  isolation: isolate;
+}
+
+.world-camera {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.world-picture,
+.world-img,
+.world-blur,
+.hotspot-layer,
+.hotspots {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.world-img {
+  opacity: 0;
+  transition: opacity 0.7s ease;
+  /* fade the edges into the page background; the right edge is the hard cut of the mockup on the
+     home page and a soft fade elsewhere */
+  --edge-r: 6%;
+  mask-image:
+    linear-gradient(to bottom, transparent 0, #000 7%, #000 91%, transparent 100%),
+    linear-gradient(to right, transparent 0, #000 3%, #000 calc(100% - var(--edge-r)), transparent 100%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+
+html[data-stage='home'] .world-img {
+  --edge-r: 0.15%;
+}
+
+#world[data-loaded] .world-img,
+.world-img--static {
+  opacity: 1;
+}
+
+/* the blurry placeholder is not masked like the image: drop it once the real art is there */
+#world[data-loaded] .world-camera {
+  background-image: none !important;
+  transition: background-image 0s 0.7s;
+}
+
+.world-blur {
+  opacity: 0;
+  pointer-events: none;
+  mask-image:
+    linear-gradient(to bottom, transparent 0, #000 9%, #000 89%, transparent 100%),
+    linear-gradient(to right, transparent 0, #000 4%, #000 92%, transparent 100%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+
+.world-dim,
+.world-vignette,
+.world-grain,
+.world-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.world-dim {
+  background: var(--bg);
+  opacity: 0;
+}
+
+.world-vignette {
+  background:
+    radial-gradient(120% 90% at 30% 50%, transparent 40%, rgba(6, 13, 20, 0.92) 100%),
+    linear-gradient(to bottom, rgba(6, 13, 20, 0.55), transparent 22%, transparent 78%, rgba(6, 13, 20, 0.6));
+  opacity: 0.35;
+}
+
+/* a whisper of film grain hides gradient banding in the dark areas */
+.world-grain {
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- stage frames: where the camera rectangle is framed on screen ---------- */
+
+.world-frame {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+html[data-stage='home'] .world-frame {
+  width: calc(100vw - var(--panel-w) - var(--panel-gap));
+  height: 100vh;
+}
+
+html[data-stage='focus'] .world-frame {
+  width: 46vw;
+  height: 100vh;
+}
+
+@media (max-width: 1023px) and (orientation: portrait), (max-width: 767px) {
+  html[data-stage='home'] .world-frame {
+    top: var(--header-h);
+    width: 100vw;
+    height: 56svh;
+  }
+
+  html[data-stage='focus'] .world-frame {
+    width: 100vw;
+    height: 46svh;
+  }
+}
+
+@media (max-width: 1023px) and (orientation: landscape) and (min-width: 768px) {
+  html[data-stage='focus'] .world-frame {
+    width: 50vw;
+  }
+}
+
+/* ---------- hotspots (clickable places on the art) ---------- */
+
+.hotspots {
+  overflow: visible;
+}
+
+.hotspot {
+  outline: none;
+  cursor: pointer;
+}
+
+.hotspot-area {
+  fill: transparent;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-opacity: 0;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  transition:
+    stroke-opacity 0.35s ease,
+    fill 0.35s ease;
+}
+
+.spot-dim {
+  fill: rgba(4, 9, 15, 0.62);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s var(--ease-out);
+}
+
+.hotspot:is(:hover, :focus-visible, .armed) .spot-dim {
+  opacity: 1;
+}
+
+.hotspot:is(:hover, :focus-visible, .armed) .hotspot-area {
+  stroke-opacity: 0.95;
+  fill: color-mix(in srgb, var(--accent) 7%, transparent);
+  filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 18px color-mix(in srgb, var(--accent) 60%, transparent));
+}
+
+.hotspot--extra:is(:hover, :focus-visible) .spot-dim {
+  opacity: 0.6;
+}
+
+/* never react while flying or when not on the home page */
+#world[data-flying] .hotspot-layer,
+html:not([data-stage='home']) .hotspot-layer {
+  pointer-events: none;
+}
+
+html:not([data-stage='home']) .spot-dim {
+  opacity: 0 !important;
+}
+
+/* one-time hint on first visit: the places glow from left to right */
+#world.is-hinting .hotspot-area {
+  animation: place-hint 1.4s var(--ease-in-out) both;
+  animation-delay: calc(var(--i, 0) * 120ms);
+}
+
+@keyframes place-hint {
+  0%,
+  100% {
+    stroke-opacity: 0;
+  }
+  45% {
+    stroke-opacity: 0.55;
+  }
+}
+
+/* ---------- floating labels ---------- */
+
+.world-labels {
+  overflow: hidden;
+}
+
+.place-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 4px;
+  padding: 8px 12px 8px 10px;
+  translate: -50% -50%;
+  border-radius: 999px;
+  background: rgba(6, 13, 20, 0.72);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 25%, transparent);
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 0.72rem;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-strong);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  will-change: transform;
+}
+
+.place-label__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  grid-row: span 2;
+}
+
+.place-label__counts {
+  display: flex;
+  gap: 8px;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.place-label__counts i {
+  font-style: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.place-label__counts i::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.place-label__counts .c-research {
+  color: var(--research);
+}
+
+.place-label__counts .c-code {
+  color: var(--code);
+}
+
+.place-label__counts .c-art {
+  color: var(--art);
+}
+
+html:not([data-stage='home']) .place-label,
+#world[data-flying] .place-label,
+.place-label[data-offscreen] {
+  opacity: 0 !important;
+}
+
+/* touch screens: labels become always-visible markers */
+@media (hover: none), (pointer: coarse) {
+  html[data-stage='home'] .place-label {
+    opacity: 0.92;
+    padding: 5px 9px 5px 7px;
+    font-size: 0.56rem;
+    letter-spacing: 0.14em;
+    column-gap: 6px;
+  }
+
+  html[data-stage='home'] .place-label__counts {
+    display: none;
+  }
+
+  html[data-stage='home'] .place-label__dot {
+    animation: marker-pulse 2.4s ease-in-out infinite;
+  }
+
+  #world[data-armed] .place-label {
+    opacity: 0.35;
+  }
+}
+
+@keyframes marker-pulse {
+  50% {
+    box-shadow:
+      0 0 0 6px color-mix(in srgb, var(--accent) 20%, transparent),
+      0 0 14px var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-img,
+  .spot-dim,
+  .hotspot-area,
+  .place-label {
+    transition: none;
+  }
+
+  #world.is-hinting .hotspot-area,
+  .place-label__dot {
+    animation: none !important;
+  }
+}
+
+/* without JavaScript the camera cannot run: show the art plainly */
+@media (scripting: none) {
+  .world-camera {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1210 / 900;
+    max-height: 100vh;
+  }
+}

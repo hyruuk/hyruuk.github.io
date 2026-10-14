@@ -1,0 +1,126 @@
+---
+/** A place = a keyword: the camera zooms on its region and its projects are composed as a collage. */
+import Composition from '../components/Composition.astro';
+import EventList from '../components/EventList.astro';
+import Icon from '../components/Icon.astro';
+import PubList from '../components/PubList.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { localize, t, type Lang } from '../i18n/utils';
+import {
+  eventsForKeyword,
+  getKeywords,
+  projectsForKeyword,
+  publicationsForKeyword,
+  roomCounts,
+  SECTION_ORDER,
+} from '../lib/content';
+
+interface Props {
+  lang: Lang;
+  id: string;
+}
+const { lang, id } = Astro.props;
+const keywords = await getKeywords();
+const idx = keywords.findIndex((k) => k.id === id);
+const kw = keywords[idx];
+const n = keywords.length;
+const prev = keywords[(idx - 1 + n) % n];
+const next = keywords[(idx + 1) % n];
+const projects = await projectsForKeyword(id, lang);
+const pubs = await publicationsForKeyword(id);
+const events = await eventsForKeyword(id);
+const counts = await roomCounts(id);
+const pad = (x: number) => String(x).padStart(2, '0');
+const roomPath = { research: '/research/', code: '/code/', 'art-music': '/art-music/' } as const;
+---
+
+<BaseLayout
+  lang={lang}
+  path={`/explore/${id}/`}
+  title={kw.data.label[lang]}
+  description={kw.data.blurb[lang]}
+  place={{ kind: 'keyword', id }}
+  kind="place"
+>
+  <section class="place-hero" style={`--accent:${kw.data.accent}`}>
+    <div class="place-hero__card reveal">
+      <p class="eyebrow">{t(lang, 'place.label')} {pad(idx + 1)} / {pad(n)}</p>
+      <h1 class="page-title" tabindex="-1">{kw.data.label[lang]}</h1>
+      <p class="page-lead">{kw.data.blurb[lang]}</p>
+      <div class="place-counts">
+        {
+          SECTION_ORDER.filter((s) => counts[s] > 0).map((s) => (
+            <a class={`chip chip--${s}`} href={`${localize(roomPath[s], lang)}?theme=${id}`}>
+              {counts[s]} · {t(lang, `room.${s}` as 'room.research')}
+            </a>
+          ))
+        }
+      </div>
+      <nav class="walk" aria-label={t(lang, 'place.all')}>
+        <a href={localize(`/explore/${prev.id}/`, lang)} data-walk="prev" aria-label={`${t(lang, 'place.prev')}: ${prev.data.label[lang]}`}>
+          <Icon name="arrow-left" size={14} />
+          {prev.data.label[lang]}
+        </a>
+        <a class="walk__next" href={localize(`/explore/${next.id}/`, lang)} data-walk="next" aria-label={`${t(lang, 'place.next')}: ${next.data.label[lang]}`}>
+          {next.data.label[lang]}
+          <Icon name="arrow" size={14} />
+        </a>
+      </nav>
+    </div>
+  </section>
+
+  <div class="place-body">
+    {projects.length > 0 ? <Composition projects={projects} seed={id} lang={lang} /> : <p class="notice">{t(lang, 'place.empty')}</p>}
+    {
+      pubs.length > 0 && (
+        <section class="block">
+          <h2 class="block__title">{t(lang, 'place.papers')}</h2>
+          <PubList pubs={pubs} lang={lang} />
+        </section>
+      )
+    }
+    {
+      events.length > 0 && (
+        <section class="block">
+          <h2 class="block__title">{t(lang, 'place.talks')}</h2>
+          <EventList events={events} lang={lang} />
+        </section>
+      )
+    }
+  </div>
+  <script>
+    import { navigate } from 'astro:transitions/client';
+    import { onPage } from '../scripts/lifecycle';
+
+    // walk along the panorama with the arrow keys (and swipes on touch screens)
+    onPage((signal) => {
+      const prev = document.querySelector<HTMLAnchorElement>('[data-walk="prev"]');
+      const next = document.querySelector<HTMLAnchorElement>('[data-walk="next"]');
+      if (!prev || !next) return;
+      document.addEventListener(
+        'keydown',
+        (e) => {
+          if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+          const target = e.target as HTMLElement;
+          if (target.closest('input, textarea, select, [contenteditable]')) return;
+          if (e.key === 'ArrowLeft') navigate(prev.href);
+          if (e.key === 'ArrowRight') navigate(next.href);
+        },
+        { signal },
+      );
+      let x0 = 0;
+      let y0 = 0;
+      const hero = document.querySelector<HTMLElement>('.place-hero');
+      hero?.addEventListener('touchstart', (e) => ((x0 = e.touches[0].clientX), (y0 = e.touches[0].clientY)), { signal, passive: true });
+      hero?.addEventListener(
+        'touchend',
+        (e) => {
+          const dx = e.changedTouches[0].clientX - x0;
+          const dy = e.changedTouches[0].clientY - y0;
+          if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) navigate(dx < 0 ? next.href : prev.href);
+        },
+        { signal, passive: true },
+      );
+    });
+  </script>
+</BaseLayout>

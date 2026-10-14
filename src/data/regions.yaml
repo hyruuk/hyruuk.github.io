@@ -1,0 +1,59 @@
+# Clickable regions of the artwork ("places"), in world units (the artwork is 1210 x 900 units).
+#
+# Easiest way to edit: `npm run dev`, open http://localhost:4321/dev/regions/, click on the art to
+# draw, then copy the generated YAML here.
+#
+# Each key is a keyword id from src/content/keywords.yaml:
+#   polygons: one or more lists of x,y pairs (a place can own several separate areas)
+#   label:    where the floating label/marker sits (x, y)
+#   camera:   the rectangle the camera flies to on the place page (see world.yaml for options)
+
+videogames:
+  polygons:
+    - [0,112, 130,100, 250,135, 345,185, 352,330, 365,420, 345,500, 420,540, 455,640, 440,760, 390,850, 0,862]
+  label: [175, 455]
+  camera: { rect: [0, 110, 460, 750], fit: cover, align: [0.35, 0.5], portrait: { rect: [40, 120, 380, 700] } }
+
+neuroimaging:
+  polygons:
+    - [425,330, 470,300, 540,298, 588,330, 600,400, 620,470, 618,575, 585,640, 520,660, 462,635, 440,575, 448,500, 420,430]
+  label: [520, 470]
+  camera: { rect: [405, 285, 230, 380], fit: cover }
+
+bci:
+  polygons:
+    - [478,648, 560,640, 612,600, 606,345, 690,345, 698,600, 738,642, 742,700, 708,766, 478,766]
+  label: [610, 700]
+  camera: { rect: [470, 330, 290, 450], fit: cover }
+
+neuro-ai:
+  polygons:
+    - [612,150, 640,70, 720,18, 800,10, 880,40, 940,110, 952,200, 932,252, 928,300, 902,360, 882,420, 870,470, 760,470, 742,392, 690,355, 642,305, 616,232]
+  label: [780, 250]
+  camera: { rect: [590, 0, 380, 480], fit: cover }
+
+music:
+  polygons:
+    - [700,472, 900,472, 906,560, 922,650, 904,790, 762,800, 742,766, 742,642, 700,600]
+  label: [800, 620]
+  camera: { rect: [660, 450, 280, 360], fit: cover }
+
+consciousness:
+  polygons:
+    - [898,330, 1000,318, 1062,358, 1095,400, 1075,520, 1045,585, 1015,645, 985,725, 930,735, 908,642, 922,560, 902,472, 896,392]
+  label: [985, 500]
+  camera: { rect: [868, 300, 262, 450], fit: cover }
+
+creativity:
+  polygons:
+    - [1095,400, 1135,395, 1210,392, 1210,872, 1100,884, 975,868, 940,785, 985,725, 1015,645, 1045,585, 1075,520]
+  label: [1095, 700]
+  camera: { rect: [930, 380, 280, 520], fit: cover, align: [0.6, 0.5] }
+
+# Extra hotspots that are not keywords (drawn on top of the places).
+extras:
+  - id: about-figure
+    page: about
+    polygons:
+      - [1142,566, 1172,566, 1176,606, 1138,606]
+    label: [1157, 560]

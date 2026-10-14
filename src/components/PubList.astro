@@ -1,0 +1,89 @@
+---
+import { localize, t, type Lang } from '../i18n/utils';
+import { effectiveKeywords, getKeywords, isMe, type PublicationEntry } from '../lib/content';
+
+interface Props {
+  pubs: PublicationEntry[];
+  lang: Lang;
+  /** show keyword chips under each entry */
+  showKeywords?: boolean;
+}
+const { pubs, lang, showKeywords = false } = Astro.props;
+const keywords = await getKeywords();
+const items = await Promise.all(
+  pubs.map(async (p) => ({ p, kws: await effectiveKeywords(p) })),
+);
+const doiUrl = (doi: string) => `https://doi.org/${doi}`;
+---
+
+<ul class="list">
+  {
+    items.map(({ p, kws }, i) => {
+      const d = p.data;
+      const href = d.url ?? (d.doi ? doiUrl(d.doi) : undefined);
+      return (
+        <li class="reveal" style={`--i:${Math.min(i, 12)}`} data-keywords={kws.join(' ')}>
+          <span class="list__year">{d.year}</span>
+          <div class="list__main">
+            <div class="list__title">
+              {href ? (
+                <a href={href} rel="noopener" target="_blank">
+                  {d.title}
+                </a>
+              ) : (
+                d.title
+              )}
+            </div>
+            <div class="list__sub">
+              {d.authors.map((a, j) => (
+                <>
+                  {j > 0 && ', '}
+                  {isMe(a) ? <span class="me">{a}</span> : a}
+                </>
+              ))}
+              {d.venue && (
+                <>
+                  {' · '}
+                  <span class="list__venue">{d.venue}</span>
+                </>
+              )}
+              {d.note && <> · {d.note}</>}
+            </div>
+            <div class="list__tags">
+              <span class="badge">{t(lang, `pubs.type.${d.type}` as 'pubs.type.article')}</span>
+              {d.status !== 'published' && <span class="badge">{t(lang, `pubs.status.${d.status}` as 'pubs.status.in-press')}</span>}
+              {d.pdf && (
+                <a class="list__link" href={d.pdf} rel="noopener" target="_blank">
+                  PDF
+                </a>
+              )}
+              {d.code && (
+                <a class="list__link" href={d.code} rel="noopener" target="_blank">
+                  Code
+                </a>
+              )}
+              {d.data && (
+                <a class="list__link" href={d.data} rel="noopener" target="_blank">
+                  Data
+                </a>
+              )}
+              {d.projects.map((ref) => (
+                <a class="list__link" href={localize(`/projects/${ref.id}/`, lang)}>
+                  {t(lang, 'project.related')} →
+                </a>
+              ))}
+              {showKeywords &&
+                keywords
+                  .filter((k) => kws.includes(k.id))
+                  .map((k) => (
+                    <a class="chip" href={localize(`/explore/${k.id}/`, lang)} style={`--accent:${k.data.accent}`}>
+                      {k.data.label[lang]}
+                    </a>
+                  ))}
+            </div>
+          </div>
+        </li>
+      );
+    })
+  }
+</ul>

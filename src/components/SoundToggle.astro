@@ -1,0 +1,31 @@
+---
+/**
+ * The little wave from the mockup = the music toggle. The player itself lives in #player
+ * (src/components/Player.astro), outside the swapped page, so it keeps playing across pages.
+ */
+import { t, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+---
+
+<div class="sound">
+  <button
+    class="sound-toggle"
+    type="button"
+    aria-pressed="false"
+    aria-label={t(lang, 'sound.on')}
+    data-label-on={t(lang, 'sound.on')}
+    data-label-off={t(lang, 'sound.off')}
+  >
+    <svg class="wave" viewBox="0 0 64 20" aria-hidden="true">
+      <path class="wave__still" d="M2 15.5c6 0 8.4-1.2 11.6-6.2S19 2.6 22 2.6s5.4 1.8 8.4 6.7 5.6 6.2 11.6 6.2" />
+      <g class="wave__live">
+        <path d="M0 10c4 0 4-7 8-7s4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 7 8 7" />
+      </g>
+    </svg>
+  </button>
+  <div class="spectrum" aria-hidden="true"><i></i><i></i><i></i></div>
+</div>

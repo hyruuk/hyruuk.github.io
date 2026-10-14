@@ -1,0 +1,39 @@
+---
+/** Plain list of places — for screen readers, search engines and anyone who prefers text. */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { localize, t, type Lang } from '../i18n/utils';
+import { getKeywords, projectsForKeyword } from '../lib/content';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const keywords = await getKeywords();
+const items = await Promise.all(keywords.map(async (k) => ({ k, n: (await projectsForKeyword(k.id, lang)).length })));
+---
+
+<BaseLayout lang={lang} path="/explore/" title={t(lang, 'place.all')} place={{ kind: 'named', id: 'overview' }} kind="explore">
+  <div class="inner">
+    <header class="page-intro reveal">
+      <p class="eyebrow">{t(lang, 'map.explore')}</p>
+      <h1 class="page-title" tabindex="-1">{t(lang, 'place.all')}</h1>
+    </header>
+    <ol class="list">
+      {
+        items.map(({ k, n }, i) => (
+          <li class="reveal" style={`--i:${i}`}>
+            <span class="list__year">{String(i + 1).padStart(2, '0')}</span>
+            <div class="list__main">
+              <div class="list__title">
+                <a href={localize(`/explore/${k.id}/`, lang)}>{k.data.label[lang]}</a>
+              </div>
+              <div class="list__sub">
+                {k.data.blurb[lang]} · {n} {t(lang, n === 1 ? 'place.project' : 'place.projects')}
+              </div>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</BaseLayout>

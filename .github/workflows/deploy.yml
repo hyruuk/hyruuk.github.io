@@ -1,0 +1,40 @@
+# Builds the site on every push to main and publishes it on GitHub Pages.
+# If anything fails (a typo in a content file, a broken link…), nothing is published:
+# the live site stays on its last good version. Details: docs/EDITING.md → "When a build fails".
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check, test, build and upload
+        uses: withastro/action@v6
+        with:
+          node-version: 22
+          build-cmd: npm run ci
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

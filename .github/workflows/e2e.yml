@@ -1,0 +1,22 @@
+# Browser tests (Chromium, Firefox, WebKit, mobile) — on pull requests and on demand.
+name: Browser tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run e2e
+        env:
+          CI: true

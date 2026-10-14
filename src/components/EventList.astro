@@ -1,0 +1,68 @@
+---
+import { formatMonth, localize, t, type Lang } from '../i18n/utils';
+import { effectiveKeywords, getKeywords, type EventEntry } from '../lib/content';
+
+interface Props {
+  events: EventEntry[];
+  lang: Lang;
+  showKeywords?: boolean;
+}
+const { events, lang, showKeywords = false } = Astro.props;
+const keywords = await getKeywords();
+const items = await Promise.all(events.map(async (e) => ({ e, kws: await effectiveKeywords(e) })));
+---
+
+<ul class="list">
+  {
+    items.map(({ e, kws }, i) => {
+      const d = e.data;
+      return (
+        <li class="reveal" style={`--i:${Math.min(i, 12)}`} data-keywords={kws.join(' ')}>
+          <span class="list__year">{formatMonth(d.date, lang)}</span>
+          <div class="list__main">
+            <div class="list__title">
+              {d.url ? (
+                <a href={d.url} rel="noopener" target="_blank">
+                  {d.title}
+                </a>
+              ) : (
+                d.title
+              )}
+            </div>
+            <div class="list__sub">
+              {d.event}
+              {d.location && <> · {d.location}</>}
+              {d.note && <> · {d.note}</>}
+            </div>
+            <div class="list__tags">
+              <span class="badge">{t(lang, `events.type.${d.type}` as 'events.type.talk')}</span>
+              {d.video && (
+                <a class="list__link" href={d.video} rel="noopener" target="_blank">
+                  Video
+                </a>
+              )}
+              {d.slides && (
+                <a class="list__link" href={d.slides} rel="noopener" target="_blank">
+                  Slides
+                </a>
+              )}
+              {d.projects.map((ref) => (
+                <a class="list__link" href={localize(`/projects/${ref.id}/`, lang)}>
+                  {t(lang, 'project.related')} →
+                </a>
+              ))}
+              {showKeywords &&
+                keywords
+                  .filter((k) => kws.includes(k.id))
+                  .map((k) => (
+                    <a class="chip" href={localize(`/explore/${k.id}/`, lang)} style={`--accent:${k.data.accent}`}>
+                      {k.data.label[lang]}
+                    </a>
+                  ))}
+            </div>
+          </div>
+        </li>
+      );
+    })
+  }
+</ul>

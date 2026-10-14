@@ -1,0 +1,394 @@
+# Talks, posters, performances, demos, media, teaching and organization.
+#   type:  talk | poster | performance | demo | workshop | teaching | media | organization
+#   date:  2024, 2024-07 or 2024-07-15
+#   keywords / projects: as in publications.yaml (projects also give their places to the event)
+
+# ---------- talks ----------
+
+- id: ohbm2026-playground
+  type: talk
+  title: "The NeuroAI playground: Region-Aware Models of Naturalistic Human Behaviour"
+  date: 2026-06
+  event: Organization for Human Brain Mapping (OHBM 2026)
+  location: Bordeaux, France
+  projects: [brains-vs-models]
+
+- id: oxford2026-forum
+  type: talk
+  title: Super Mario Bros. as a naturalistic laboratory for understanding cognition in brains and machines
+  date: 2026-03-26
+  event: Oxford NeuroAI Forum (invited by Rui Ponte Costa)
+  location: University of Oxford, UK
+  projects: [cneuromod-mario]
+
+- id: forth2026-seminar
+  type: talk
+  title: Super Mario Bros. as a total laboratory for understanding cognition in brains and machines
+  date: 2026-02-20
+  event: IMBB-FORTH seminar (invited by Emmanouil Froudarakis)
+  location: Heraklion, Crete, Greece
+  url: https://www.imbb.forth.gr/files/repository/20260213144619_20022026_Yarel-BioAbstract.pdf
+  projects: [cneuromod-mario]
+
+- id: ccn2025-poster
+  type: poster
+  title: "Brittle Brain Encoding: the human brain is neither a NES nor a four-layer CNN"
+  date: 2025-08
+  event: Cognitive Computational Neuroscience (CCN 2025)
+  location: Amsterdam, Netherlands
+  url: https://2025.ccneuro.org/abstract_pdf/Harel_2025_Brittle_Brain_Encoding_Poor_Out-of-Distribution_Generalization.pdf
+  projects: [brains-vs-models]
+
+- id: rlc2025-poster
+  type: poster
+  title: Human-AI alignment of learning trajectories in video games
+  date: 2025-08
+  event: Reinforcement Learning and Video Games Workshop @ RLC 2025
+  location: Edmonton, Canada
+  projects: [mariha]
+
+- id: assc2024
+  type: talk
+  title: "Waves of attention: Tracking the neural correlates of sustained attention with MEG"
+  date: 2024-07
+  event: Association for the Scientific Study of Consciousness (ASSC 27)
+  location: Tokyo, Japan
+  projects: [saflow]
+
+- id: isea2024
+  type: talk
+  title: "V F C: An adaptive cinema experience powered by brain-computer interface"
+  date: 2024-06
+  event: 29th International Symposium on Electronic Art (ISEA2024)
+  location: Brisbane, Australia
+  url: https://www.isea-symposium-archives.org/?p=81137
+  projects: [vfc-adaptive-cinema]
+
+- id: oxford2024-lab
+  type: talk
+  title: Lab meeting lecture (invited by Mark Woolrich)
+  date: 2024-01
+  event: Oxford Centre for Human Brain Activity
+  location: University of Oxford, UK
+  keywords: [neuroimaging]
+
+- id: cuttinggardens2023
+  type: talk
+  title: "Goofi-pipe: An accessible and modality-agnostic biofeedback framework for explorative experiments"
+  date: 2023-10-17
+  event: CuttingGardens 2023 (also session chair)
+  location: Montréal
+  url: https://cuttinggardens2023.org/gardens/montreal/
+  projects: [goofi-pipe]
+
+- id: unique2023
+  type: talk
+  title: Exploring data management tools for Open Science
+  date: 2023-06
+  event: UNIQUE Students Symposium
+  location: Montréal
+  keywords: [neuroimaging]
+
+- id: usc2023-lab
+  type: talk
+  title: Lab meeting lecture (invited by Richard Leahy)
+  date: 2023-04
+  event: University of Southern California
+  location: Los Angeles, USA
+  keywords: [neuroimaging]
+
+- id: ohbm2022-saflow
+  type: talk
+  title: Decoding the neural correlates of sustained attention using MEG and supervised learning
+  date: 2022-07
+  event: Organization for Human Brain Mapping (OHBM 2022)
+  location: Glasgow, UK
+  projects: [saflow]
+
+- id: cneuromod2021
+  type: talk
+  title: "Shinobi in the scanner: Development and validation of an fMRI/MEG controller"
+  date: 2021
+  event: CNeuroMod Research Month 2021
+  location: Montréal
+  projects: [mri-meg-controller]
+
+- id: psy2017-flow
+  type: talk
+  title: Exploring the psychological state of flow in light of integrated information theory
+  date: 2017-04
+  event: 11th Scientific Day of the Department of Psychology, Université de Montréal
+  location: Montréal
+  note: Best oral communication prize
+  keywords: [consciousness]
+
+# ---------- posters ----------
+
+- id: ohbm2022-poster
+  type: poster
+  title: Event-related analysis of brain activity during videogame play guided by game content
+  date: 2022-07
+  event: Organization for Human Brain Mapping (OHBM 2022)
+  location: Glasgow, UK
+  projects: [gamer-in-the-scanner]
+
+- id: ohbm2021-poster
+  type: poster
+  title: "Shinobi in the scanner: Development and validation of an fMRI/MEG controller"
+  date: 2021-06
+  event: Organization for Human Brain Mapping (OHBM 2021)
+  location: Online
+  projects: [mri-meg-controller]
+
+- id: cogsci2019-poster
+  type: poster
+  title: Exploring cognitive states through real-time classification and sonification
+  date: 2019-07
+  event: Annual Meeting of the Cognitive Science Society (CogSci 2019)
+  location: Montréal
+  projects: [coco-brain-channel]
+
+- id: neuromusic2018
+  type: poster
+  title: "CoCo Brain Channel: Real-time musical exploration of mental states using BCI"
+  date: 2018-11
+  event: 14th Annual NeuroMusic Conference
+  location: Hamilton, Canada
+  projects: [coco-brain-channel]
+
+- id: neuroqam2017
+  type: poster
+  title: MEG investigation of brain network dynamics during rhythm games
+  date: 2017-11
+  event: NeuroQAM Day 2017
+  location: Montréal
+  keywords: [neuroimaging, videogames, music]
+
+- id: main2017
+  type: poster
+  title: Classifying sub-clinical social anxiety levels using EEG oscillations
+  date: 2017-11
+  event: Montreal Artificial Intelligence and Neuroscience (MAIN 2017)
+  location: Montréal
+  keywords: [neuroimaging, neuro-ai]
+
+- id: sans2016
+  type: poster
+  title: The decoding of emotional facial expressions across spatial frequency bands
+  date: 2016-04
+  event: Social & Affective Neuroscience Society, 9th Annual Meeting
+  location: New York, USA
+  keywords: [neuroimaging]
+
+- id: cernec2015
+  type: poster
+  title: Relative contribution of spatial frequency bands to affective processing
+  date: 2015-03
+  event: 23rd Scientific Day, CERNEC
+  location: Saint-Sauveur, Canada
+  keywords: [neuroimaging]
+
+- id: vhrn2014
+  type: poster
+  title: Spatial frequency bands and affective processing of visual information
+  date: 2014-11
+  event: 20th Annual Meeting of the Vision Health Research Network
+  location: Montréal
+  keywords: [neuroimaging]
+
+# ---------- performances & demos ----------
+
+- id: cosyne2025-dj
+  type: performance
+  title: DJ set — Xanarelle B2B Mat Moebius
+  date: 2025-04
+  event: CoSyne 2025 closing party
+  location: Mont-Tremblant, Canada
+  projects: [xanarelle]
+
+- id: usc2023-demo
+  type: demo
+  title: Neurofeedback & generative AI demonstration — neurotechnologies for adaptive cinema
+  date: 2023-04-26
+  event: AI, Creativity & the Future of Film (USC School of Cinematic Arts)
+  location: Los Angeles, USA
+  url: https://cinema.usc.edu/news/article.cfm?id=65706
+  projects: [vfc-adaptive-cinema]
+
+- id: cosyne2023-inoutself
+  type: performance
+  title: In Outself — neurofeedback audiovisual performance with DJ/VJ
+  date: 2023-03
+  event: CoSyne 2023
+  location: Montréal
+  projects: [neurofeedback-performances]
+
+- id: grooveandbass2023
+  type: demo
+  title: Live neurofeedback demonstration
+  date: 2023
+  event: Groove and Bass festival
+  location: Canada
+  projects: [neurofeedback-performances]
+
+- id: diskodissey2022
+  type: demo
+  title: Live neurofeedback demonstration
+  date: 2022
+  event: Good Vibes Diskodissey festival
+  location: Canada
+  projects: [neurofeedback-performances]
+
+- id: numina2021
+  type: performance
+  title: Numina — exploring generative audiovisual universes through neurofeedback
+  date: 2021-10
+  event: Montréal Connecte 2021
+  location: Montréal
+  video: https://www.youtube.com/watch?v=7iOb3PV1-dQ
+  projects: [neurofeedback-performances]
+
+- id: ohbm2019-coco
+  type: performance
+  title: CoCo Brain Channel v2 — real-time sonification of brain waves with DJ/VJ
+  date: 2019-06
+  event: OHBM 2019 (BrainArt)
+  location: Rome, Italy
+  url: https://www.neurobureau.org/terpsichore_coco-brain-channel-neural-sonification_by_karim-jerbi/
+  projects: [coco-brain-channel]
+
+- id: portail2018
+  type: demo
+  title: CoCo Brain Channel — live demonstration
+  date: 2018
+  event: Portail Festival
+  location: Canada
+  projects: [coco-brain-channel]
+
+- id: mccord2018-coco
+  type: performance
+  title: CoCo Brain Channel v1 — real-time sonification of brain waves
+  date: 2018-03
+  event: Printemps numérique, Musée McCord
+  location: Montréal
+  projects: [coco-brain-channel]
+
+# ---------- media & outreach ----------
+
+- id: curium2024
+  type: media
+  title: L'être humain bionique (interview)
+  date: 2024-01-13
+  event: Curium, ICI Radio-Canada
+  url: https://ici.radio-canada.ca/jeunesse/scolaire/emissions/10563/curium/episodes/852256/curiosite-science-concentre-recherche-humain-bionique/nosvideos
+  keywords: [bci]
+
+- id: timeworld2022
+  type: media
+  title: Is creativity the prerogative of biological intelligences?
+  date: 2022-05
+  event: TimeWorld conference on artificial intelligence (invited speaker)
+  location: Montréal
+  projects: [creativity-humans-machines]
+
+- id: dnarchi2021
+  type: media
+  title: Neuroscience challenges for architecture (panel)
+  date: 2021-09-17
+  event: DNArchi21
+  location: Online
+  url: https://www.eegsynth.org/wp-content/uploads/2021/09/Livretv2021.pdf
+  keywords: [bci]
+
+- id: neuroshow2021
+  type: media
+  title: Round table after a theatre performance about neuroscience (panel)
+  date: 2021-05-04
+  event: Neuro-Show 2.0 (Acfas)
+  location: Online
+  keywords: [consciousness]
+
+- id: seur2018
+  type: media
+  title: Neuroscience discovery & introduction to neurofeedback for high-school students (workshop)
+  date: 2018-06
+  event: SEUR project, Université de Montréal
+  location: Montréal
+  keywords: [bci]
+
+- id: pintofscience2017
+  type: media
+  title: Exploring the psychological state of flow through cognitive neuroscience
+  date: 2017-06
+  event: Pint of Science Montréal (invited speaker)
+  location: Montréal
+  keywords: [consciousness]
+
+# ---------- organization ----------
+
+- id: hacknight2023
+  type: organization
+  title: NeuroAI Creative Hacknight (organizer)
+  date: 2023-07
+  event: OHBM 2023 satellite event
+  location: Montréal
+  keywords: [neuro-ai, creativity]
+
+- id: symposium2018-meg
+  type: organization
+  title: "MEG: a cutting-edge tool to study brain networks and cognition (symposium organizer & chair)"
+  date: 2018-04
+  event: 12th Scientific Day of the Department of Psychology, Université de Montréal
+  location: Montréal
+  keywords: [neuroimaging]
+
+- id: symposium2017-consciousness
+  type: organization
+  title: Neural correlates of states of consciousness (symposium organizer & chair)
+  date: 2017-04
+  event: 11th Scientific Day of the Department of Psychology, Université de Montréal
+  location: Montréal
+  keywords: [consciousness]
+
+# ---------- teaching ----------
+
+- id: main2025-edu
+  type: teaching
+  title: Learning neural representations of videogame play (educational session)
+  date: 2025-12
+  event: Montreal AI and Neuroscience (MAIN 2025)
+  location: Montréal
+  url: https://main-educational.github.io/2025/neuroai-videogames/
+  projects: [brains-vs-models]
+
+- id: neuroqam2025
+  type: teaching
+  title: Introduction à MNE-Python et Scikit-Learn
+  date: 2025-03
+  event: École d'été NeuroQAM
+  location: Montréal
+  keywords: [neuroimaging, neuro-ai]
+
+- id: brainhack2025
+  type: teaching
+  title: Introduction à la programmation scientifique
+  date: 2025-03
+  event: Brainhack School 2025
+  location: Montréal
+  keywords: [neuroimaging]
+
+- id: udem-ta
+  type: teaching
+  title: Teaching assistant — neuroscience methods, quantitative analysis, psychology of dreams
+  date: 2023
+  event: Department of Psychology, Université de Montréal (2015–2023)
+  location: Montréal
+  keywords: [neuroimaging]
+
+- id: brainhack-peer
+  type: teaching
+  title: Peer instructor
+  date: 2021
+  event: Brainhack School (2018, 2021)
+  location: Montréal / online
+  keywords: [neuroimaging]

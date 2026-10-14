@@ -1,0 +1,133 @@
+---
+/**
+ * HYRUUK — the generative acronym that replaces the mockup's quote.
+ * "Harel Yann's {R} {U1} of {U2} {K}" — words and evocations live in src/data/hyruuk.yaml.
+ * The build bakes one draw into the HTML (works without JavaScript); the browser draws a new
+ * one on each visit and on click.
+ */
+import { t, type Lang } from '../i18n/utils';
+import { hyruuk } from '../lib/data';
+import { draw, templateParts, type Slot } from '../lib/hyruuk';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const d = draw(hyruuk);
+const parts = templateParts(hyruuk.template);
+const vocab = JSON.stringify(hyruuk);
+
+/** Highlight the H and Y of "Harel Yann" in the literal text. */
+function literal(text: string) {
+  const m = text.match(/^(\s*)H(arel\s+)Y(ann)(.*)$/s);
+  return m ? { pre: m[1], h: m[2], y: m[3], rest: m[4] } : null;
+}
+---
+
+<div class="hyruuk" lang="en">
+  <button class="hyruuk__btn" type="button" aria-describedby="hyruuk-help">
+    <span class="hyruuk__title" aria-hidden="true">
+      <i class="i-h">H</i><i class="i-y">Y</i><i class="i-r">R</i><i class="i-u">U</i><i class="i-u2">U</i><i class="i-k">K</i>
+    </span>
+    <span class="hyruuk__text" aria-live="off">
+      {
+        parts.map((p, i) => {
+          if (i % 2 === 1) {
+            const slot = p as Slot;
+            const w = d[slot];
+            return (
+              <span class={`hy-word hy-word--${slot}`} data-slot={slot} data-evokes={w.evokes}>
+                <b>{w.word[0]}</b>
+                <span class="hy-tail">{w.word.slice(1)}</span>
+              </span>
+            );
+          }
+          const l = literal(p);
+          return l ? (
+            <span class="hy-lit">
+              {l.pre}
+              <b class="hy-name">H</b>
+              {l.h}
+              <b class="hy-name">Y</b>
+              {l.y}
+              {l.rest}
+            </span>
+          ) : (
+            <span class="hy-lit">{p}</span>
+          );
+        })
+      }
+    </span>
+  </button>
+  <p class="hyruuk__evokes" aria-hidden="true"></p>
+  <span id="hyruuk-help" class="sr-only">{t(lang, 'hyruuk.label')}</span>
+  <script type="application/json" class="hyruuk__vocab" set:html={vocab} />
+</div>
+
+<script>
+  import { draw, type Draw, type Vocab } from '../lib/hyruuk';
+  import { onPage } from '../scripts/lifecycle';
+
+  const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
+
+  function scramble(el: HTMLElement, to: string, duration: number, signal: AbortSignal) {
+    const from = el.textContent ?? '';
+    const start = performance.now();
+    const step = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      const len = Math.round(from.length + (to.length - from.length) * p);
+      const settled = Math.floor(to.length * p * p);
+      let s = to.slice(0, Math.min(settled, len));
+      for (let i = s.length; i < len; i++) s += to[i] === '-' ? '-' : LETTERS[(Math.random() * 26) | 0];
+      el.textContent = s;
+      if (p < 1 && !signal.aborted) requestAnimationFrame(step);
+      else el.textContent = to;
+    };
+    requestAnimationFrame(step);
+  }
+
+  onPage((signal) => {
+    const root = document.querySelector<HTMLElement>('.hyruuk');
+    if (!root) return;
+    const vocab: Vocab = JSON.parse(root.querySelector('.hyruuk__vocab')!.textContent!);
+    const btn = root.querySelector<HTMLButtonElement>('.hyruuk__btn')!;
+    const evokes = root.querySelector<HTMLElement>('.hyruuk__evokes')!;
+    const words = [...root.querySelectorAll<HTMLElement>('.hy-word')];
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const find = (slot: string, word: string) => vocab[slot as keyof Draw].find((w) => w.word === word)!;
+    let current = Object.fromEntries(
+      words.map((el) => [el.dataset.slot, find(el.dataset.slot!, el.textContent!.trim())]),
+    ) as Draw;
+
+    const show = (next: Draw, animate: boolean) => {
+      words.forEach((el, i) => {
+        const w = next[el.dataset.slot as keyof Draw];
+        el.dataset.evokes = w.evokes;
+        const tail = el.querySelector<HTMLElement>('.hy-tail')!;
+        if (animate) scramble(tail, w.word.slice(1), 380 + i * 110, signal);
+        else tail.textContent = w.word.slice(1);
+      });
+      current = next;
+    };
+
+    const reroll = (animate: boolean) => show(draw(vocab, Math.random, current), animate && !reduced);
+
+    btn.addEventListener('click', () => {
+      reroll(true);
+      evokes.textContent = '';
+      root.classList.add('is-rerolled');
+    }, { signal });
+    root.addEventListener(
+      'pointerover',
+      (e) => {
+        const w = (e.target as Element).closest<HTMLElement>('.hy-word');
+        if (w) evokes.textContent = `${w.textContent} — ${w.dataset.evokes}`;
+      },
+      { signal },
+    );
+    root.addEventListener('pointerleave', () => (evokes.textContent = ''), { signal });
+
+    // a fresh expansion on every visit of the home page
+    reroll(true);
+  });
+</script>

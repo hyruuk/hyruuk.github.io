@@ -1,0 +1,12 @@
+---
+import ProjectView from '../../../views/ProjectView.astro';
+import { getProjects } from '../../../lib/content';
+
+export async function getStaticPaths() {
+  // projects with an `href` (e.g. Brains & Games) have their own page elsewhere
+  return (await getProjects('en')).filter((p) => !p.data.href).map((p) => ({ params: { slug: p.id } }));
+}
+const { slug } = Astro.params;
+---
+
+<ProjectView lang="fr" id={slug} />

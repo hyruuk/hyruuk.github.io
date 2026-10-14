@@ -1,0 +1,81 @@
+---
+import Icon from '../components/Icon.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { localize, t, type Lang } from '../i18n/utils';
+import { site } from '../lib/data';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+// The address is stored reversed and split, and assembled by the browser on click (keeps simple
+// spam harvesters away; nothing readable in the HTML).
+const [user, domain] = site.email.split('@');
+const parts = { u: [...user].reverse().join(''), d: [...domain].reverse().join('') };
+---
+
+<BaseLayout lang={lang} path="/contact/" title={t(lang, 'contact.title')} place={{ kind: 'named', id: 'contact' }} kind="contact">
+  <div class="inner">
+    <div class="two-col">
+      <div>
+        <header class="page-intro reveal">
+          <p class="eyebrow">{t(lang, 'contact.email')}</p>
+          <h1 class="page-title" tabindex="-1">{t(lang, 'contact.title')}</h1>
+          <p class="page-lead">{t(lang, 'contact.intro')}</p>
+        </header>
+        <p class="reveal">
+          <button class="email-button" type="button" data-email-u={parts.u} data-email-d={parts.d}>
+            <Icon name="mail" size={18} />
+            <span data-email-label>{t(lang, 'contact.reveal')}</span>
+          </button>
+        </p>
+        <div class="discord-card reveal" style="margin-top:48px">
+          <p class="eyebrow" style="--accent:#8b93ff">{t(lang, 'room.community')}</p>
+          <h2 class="page-title" style="font-size:1.4rem">{site.discord.name}</h2>
+          <a class="discord-join" href={localize('/brains-and-games/', lang)}>
+            <Icon name="discord" size={18} />
+            {t(lang, 'bg.join')}
+          </a>
+        </div>
+      </div>
+      <aside class="reveal" style="--i:2">
+        <h2 class="block__title">{t(lang, 'contact.profiles')}</h2>
+        <ul class="profile-list">
+          {
+            site.profiles.map((p) => (
+              <li>
+                <a href={p.url} rel="me noopener" target="_blank">
+                  <Icon name={p.kind} size={18} />
+                  <span>{p.label}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </aside>
+    </div>
+  </div>
+  <script>
+    import { onPage } from '../scripts/lifecycle';
+
+    onPage((signal) => {
+      const btn = document.querySelector<HTMLButtonElement>('[data-email-u]');
+      if (!btn) return;
+      btn.addEventListener(
+        'click',
+        () => {
+          const rev = (s: string) => [...s].reverse().join('');
+          const address = `${rev(btn.dataset.emailU!)}@${rev(btn.dataset.emailD!)}`;
+          const label = btn.querySelector('[data-email-label]')!;
+          if (label.textContent === address) {
+            location.href = `mailto:${address}`;
+            return;
+          }
+          label.textContent = address;
+          btn.setAttribute('aria-label', address);
+        },
+        { signal },
+      );
+    });
+  </script>
+</BaseLayout>

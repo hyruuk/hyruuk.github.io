@@ -1,0 +1,90 @@
+---
+/**
+ * Every page uses this layout. The <body> holds three blocks:
+ *   #world  — the artwork (never swapped during navigation)
+ *   #page   — header, page content, panel/rail, footer (the only part that is swapped)
+ *   #player — the music player (never swapped)
+ * The page's place in the world is written on <html> (data-camera / data-stage / data-look).
+ */
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
+import '../styles/tokens.css';
+import '../styles/global.css';
+import '../styles/world.css';
+import '../styles/layout.css';
+import '../styles/transitions.css';
+import { ClientRouter } from 'astro:transitions';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import Panel from '../components/Panel.astro';
+import Player from '../components/Player.astro';
+import World from '../components/world/World.astro';
+import { localize, pick, t, type Lang } from '../i18n/utils';
+import { site, worldImages } from '../lib/data';
+import { type Place, resolvePlace } from '../lib/places';
+
+interface Props {
+  lang: Lang;
+  /** English path of this page, e.g. "/explore/music/" — used for the FR/EN switch and hreflang */
+  path: string;
+  title?: string;
+  description?: string;
+  place: Place;
+  kind: string;
+  /** current room, highlighted in the rail */
+  room?: string;
+  /** absolute or root-relative image for link previews */
+  image?: string;
+}
+const { lang, path, title, description, place, kind, room, image } = Astro.props;
+const resolved = resolvePlace(place);
+const fullTitle = title ? `${title} · ${site.name}` : `${site.name} · ${pick(site.role, 'en')}`;
+const desc = description ?? pick(site.description, lang)!;
+const canonical = new URL(localize(path, lang), site.url).href;
+const alternates = (['en', 'fr'] as const).map((l) => ({ l, href: new URL(localize(path, l), site.url).href }));
+const ogImage = new URL(image ?? worldImages.tiers[0].webp, site.url).href;
+---
+
+<!doctype html>
+<html lang={lang} data-stage={resolved.stage} data-look={resolved.look} data-camera={resolved.camera} data-kind={kind}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    {(!site.launched || kind === 'notfound') && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="canonical" href={canonical} />
+    {alternates.map((a) => <link rel="alternate" hreflang={a.l} href={a.href} />)}
+    <link rel="alternate" hreflang="x-default" href={alternates[0].href} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#060d14" />
+    <meta name="color-scheme" content="dark" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content={lang === 'fr' ? 'fr_CA' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <ClientRouter fallback="swap" />
+    <script>
+      import '../scripts/router/swap';
+      import '../scripts/lifecycle';
+    </script>
+  </head>
+  <body>
+    <World />
+    <div id="page" data-kind={kind}>
+      <a class="skip-link" href="#main">{t(lang, 'nav.skip')}</a>
+      <Header lang={lang} path={path} kind={kind} />
+      <main id="main" class={`main main--${kind}`}>
+        <slot />
+      </main>
+      <Panel lang={lang} variant={kind === 'home' ? 'full' : 'rail'} room={room} />
+      {kind !== 'home' && <Footer lang={lang} />}
+    </div>
+    <Player />
+  </body>
+</html>

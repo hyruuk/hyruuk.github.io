@@ -1,0 +1,67 @@
+---
+/**
+ * The right-hand panel. On the home page it is the full panel from the mockup (HYRUUK, rooms,
+ * Discord line, sound); on every other page it slims into a rail. Both share a
+ * view-transition-name, so the browser morphs one into the other during navigation.
+ */
+import { localize, t, type Lang } from '../i18n/utils';
+import Hyruuk from './Hyruuk.astro';
+import Icon from './Icon.astro';
+import SoundToggle from './SoundToggle.astro';
+
+interface Props {
+  lang: Lang;
+  variant: 'full' | 'rail';
+  room?: string;
+}
+const { lang, variant, room } = Astro.props;
+const [researchA, researchB] = t(lang, 'room.research').split(' & ');
+const rooms = [
+  { id: 'research', href: '/research/', short: t(lang, 'room.research.short'), full: t(lang, 'room.research') },
+  { id: 'code', href: '/code/', short: t(lang, 'room.code.short'), full: t(lang, 'room.code') },
+  { id: 'art-music', href: '/art-music/', short: t(lang, 'room.art-music.short'), full: t(lang, 'room.art-music') },
+  { id: 'about', href: '/about/', short: t(lang, 'room.about'), full: t(lang, 'room.about') },
+];
+---
+
+<aside class={`panel panel--${variant}`} aria-label={lang === 'fr' ? 'Salles' : 'Rooms'}>
+  {variant === 'full' && <Hyruuk lang={lang} />}
+
+  <nav class="rooms">
+    {
+      rooms.map((r) => (
+        <a
+          class={`room room--${r.id}`}
+          href={localize(r.href, lang)}
+          aria-current={room === r.id ? 'page' : undefined}
+          aria-label={variant === 'rail' ? r.full : undefined}
+        >
+          {variant === 'full' ? (
+            <span class="room__label">
+              {r.id === 'research' ? (
+                <>
+                  {researchA}
+                  <br />& {researchB}
+                </>
+              ) : (
+                r.full
+              )}
+            </span>
+          ) : (
+            <span class="room__label">{r.short}</span>
+          )}
+          <span class="room__arrow" aria-hidden="true">
+            <Icon name="arrow" size={variant === 'full' ? 20 : 14} />
+          </span>
+        </a>
+      ))
+    }
+  </nav>
+
+  <a class="bg-line" href={localize('/brains-and-games/', lang)} aria-current={room === 'community' ? 'page' : undefined}>
+    <Icon name="discord" size={variant === 'full' ? 16 : 18} />
+    <span class="bg-line__text">{t(lang, 'bg.line')}</span>
+  </a>
+
+  <SoundToggle lang={lang} />
+</aside>

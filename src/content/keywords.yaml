@@ -1,0 +1,101 @@
+# Places — the themes behind the clickable regions of the artwork.
+#
+# id:      used in URLs (/explore/<id>/) and in every item's `keywords:` list. Lowercase, dashes only.
+# label:   short name (EN/FR) shown on hover, in chips and as the page title
+# blurb:   one or two sentences shown on the place page
+# accent:  glow colour of the region on the artwork
+# order:   left → right position along the panorama (the "walk" order)
+# match:   words that suggest this place when you add a new item (npm run add / the New item form)
+#
+# A new place gets its page immediately; draw its region with the dev editor to put it on the art.
+
+- id: videogames
+  order: 1
+  accent: "#ffd166"
+  label: { en: Videogames, fr: Jeux vidéo }
+  blurb:
+    en: >-
+      Videogames are my favourite laboratory: rich, interactive worlds where people learn, plan and get
+      absorbed — and where every button press can be logged next to brain activity.
+    fr: >-
+      Les jeux vidéo sont mon laboratoire préféré : des mondes riches et interactifs où l'on apprend,
+      planifie et s'immerge — et où chaque pression de bouton peut être alignée sur l'activité cérébrale.
+  match: [videogame, video game, game, games, gaming, gamer, gameplay, esports, e-sports, mario, shinobi, nintendo, sega, controller, gamepad, retro, moba, league of legends, overwatch, chess, player, players, level, levels, vgdl, roguelite, tower defense]
+
+- id: neuroimaging
+  order: 2
+  accent: "#ff8c42"
+  label: { en: Neuroimaging, fr: Neuroimagerie }
+  blurb:
+    en: >-
+      fMRI, MEG and EEG: recording the living brain at work, at the scale of seconds or milliseconds —
+      and building the open datasets, hardware and tools that make it reproducible.
+    fr: >-
+      IRMf, MEG et EEG : enregistrer le cerveau en action, à l'échelle de la seconde ou de la milliseconde —
+      et construire les jeux de données, le matériel et les outils ouverts qui rendent tout cela reproductible.
+  match: [fmri, mri, meg, eeg, ieeg, magnetoencephalography, electroencephalography, neuroimaging, brain imaging, bold, cortex, cortical, white matter, diffusion, connectome, bids, brain activity, brain maps, brain region, brain regions, atlas, parcellation, scanner, glm, neuroimage, nilearn, mne, fmriprep, freesurfer]
+
+- id: bci
+  order: 3
+  accent: "#2ee6d6"
+  label: { en: Brain–computer interfaces, fr: Interfaces cerveau-machine }
+  blurb:
+    en: >-
+      Closing the loop between brains and machines: real-time EEG that turns mental states into sound,
+      images or film — for science, for art, and for the people who need it most.
+    fr: >-
+      Boucler la boucle entre cerveau et machine : de l'EEG en temps réel qui transforme les états mentaux
+      en son, en image ou en film — pour la science, pour l'art, et pour celles et ceux qui en ont besoin.
+  match: [bci, brain-computer, brain–computer, brain computer interface, brain-machine, neurofeedback, biofeedback, sonification, real-time, real time, closed-loop, p300, adaptive, biosignal, biosignals, headset, neurotechnology]
+
+- id: neuro-ai
+  order: 4
+  accent: "#6ab7ff"
+  label: { en: Neuro-AI, fr: Neuro-IA }
+  blurb:
+    en: >-
+      Brains and machines as mirrors: training artificial agents on human play, testing whether brain
+      encoding models generalize, and comparing human and machine creativity.
+    fr: >-
+      Cerveaux et machines en miroir : entraîner des agents artificiels sur le jeu humain, tester si les
+      modèles d'encodage cérébral généralisent, et comparer créativité humaine et machinique.
+  match: [ai, artificial intelligence, neural network, neural networks, deep learning, machine learning, reinforcement learning, rl, llm, llms, language model, language models, encoding model, encoding, cnn, convolutional, agent, agents, imitation, generative ai, classifier, decoding, neuroai, neuro-ai]
+
+- id: music
+  order: 5
+  accent: "#a78bfa"
+  label: { en: Music, fr: Musique }
+  blurb:
+    en: >-
+      From DJ sets to brain-wave sonification: music as a performance, an experiment and a way to feel
+      what neural rhythms sound like.
+    fr: >-
+      Des sets de DJ à la sonification des ondes cérébrales : la musique comme performance, comme
+      expérience et comme façon d'entendre les rythmes neuronaux.
+  match: [music, musical, sound, audio, dj, playlist, playlists, track, tracks, sonification, rhythm, concert, festival, live, electronic, mix, soundtrack, composition]
+
+- id: consciousness
+  order: 6
+  accent: "#ff6fb5"
+  label: { en: Consciousness & flow, fr: Conscience & flow }
+  blurb:
+    en: >-
+      Attention, absorption and altered states: what happens in the brain when we lose ourselves in a task,
+      a trance — or a psychedelic experience.
+    fr: >-
+      Attention, absorption et états modifiés : ce qui se passe dans le cerveau quand on se perd dans une
+      tâche, une transe — ou une expérience psychédélique.
+  match: [consciousness, conscious, flow, attention, sustained attention, attentional, mind wandering, psychedelic, psychedelics, lsd, altered states, non-ordinary, trance, meditation, awareness, ego, dream, dreams, gradcpt, vigilance]
+
+- id: creativity
+  order: 7
+  accent: "#ffb199"
+  label: { en: Art & creativity, fr: Art & créativité }
+  blurb:
+    en: >-
+      Art-science experiments and the science of creativity: adaptive cinema, generative poetry,
+      bio-adaptive storytelling, and what makes minds (and machines) creative.
+    fr: >-
+      Expériences art-science et science de la créativité : cinéma adaptatif, poésie générative,
+      récits bio-adaptatifs, et ce qui rend les esprits (et les machines) créatifs.
+  match: [art, arts, artistic, creativity, creative, cinema, film, films, movie, poetry, poem, generative, installation, design, pareidolia, fractal, fractals, storytelling, narrative, immersive, audiovisual, performance, exhibition, collective]

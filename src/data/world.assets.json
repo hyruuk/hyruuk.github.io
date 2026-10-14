@@ -1,0 +1,45 @@
+{
+  "hash": "ecef2dcf",
+  "units": [
+    1210,
+    900
+  ],
+  "master": [
+    4840,
+    3600
+  ],
+  "tiers": [
+    {
+      "w": 1210,
+      "h": 900,
+      "avif": "/world/world-ecef2dcf-1210.avif",
+      "webp": "/world/world-ecef2dcf-1210.webp"
+    },
+    {
+      "w": 1815,
+      "h": 1350,
+      "avif": "/world/world-ecef2dcf-1815.avif",
+      "webp": "/world/world-ecef2dcf-1815.webp"
+    },
+    {
+      "w": 2420,
+      "h": 1800,
+      "avif": "/world/world-ecef2dcf-2420.avif",
+      "webp": "/world/world-ecef2dcf-2420.webp"
+    },
+    {
+      "w": 3630,
+      "h": 2700,
+      "avif": "/world/world-ecef2dcf-3630.avif",
+      "webp": "/world/world-ecef2dcf-3630.webp"
+    },
+    {
+      "w": 4840,
+      "h": 3600,
+      "avif": "/world/world-ecef2dcf-4840.avif",
+      "webp": "/world/world-ecef2dcf-4840.webp"
+    }
+  ],
+  "blur": "/world/world-ecef2dcf-blur.webp",
+  "lqip": "data:image/webp;base64,UklGRtwAAABXRUJQVlA4INAAAABQBwCdASowACQAPrlKnUunJCKhvHgIAOAXCUAWI/cwXctUSRHqHTIQ/IUBRH4sCsh9g/NdmQPiPBoBqct5486UT5IAAP73fktNfwE1HKGuwB35Q+Et7KXJkxFifOvCiq44M7HXxBYqAPPLtv4DfwWVfnRQ13XIvcxnGS9LXfh41tQ7lV0fz+MQPZ/CKYRN0yV/tGJ6lNaCPn2p/Z3HSzkU4/vNg/h2qyFGZLSoSRjXE/IFFyK7wv82oep1LmwVtUThHABsZ4LwJ9lmAkFAAAAA"
+}

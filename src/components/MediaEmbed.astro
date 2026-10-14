@@ -1,0 +1,56 @@
+---
+/**
+ * Click-to-load embed: nothing is requested from YouTube/Vimeo/Spotify/SoundCloud until the
+ * visitor clicks (privacy + speed).
+ */
+import { t, type Lang } from '../i18n/utils';
+
+interface Props {
+  kind: 'youtube' | 'vimeo' | 'spotify' | 'soundcloud';
+  id: string;
+  title?: string;
+  lang: Lang;
+}
+const { kind, id, title, lang } = Astro.props;
+const src = {
+  youtube: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`,
+  vimeo: `https://player.vimeo.com/video/${id}?autoplay=1&dnt=1`,
+  spotify: `https://open.spotify.com/embed/${id.replace(/^spotify:/, '').replace(/:/g, '/')}?theme=0`,
+  soundcloud: `https://w.soundcloud.com/player/?url=${encodeURIComponent(id)}&color=%237273ee&auto_play=true&visual=true`,
+}[kind];
+const host = { youtube: 'YouTube', vimeo: 'Vimeo', spotify: 'Spotify', soundcloud: 'SoundCloud' }[kind];
+const thumb = kind === 'youtube' ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : undefined;
+const isVideo = kind === 'youtube' || kind === 'vimeo';
+---
+
+<div class={`embed ${isVideo ? 'embed--video' : 'embed--audio'} reveal`} data-embed-src={src} data-embed-title={title ?? host}>
+  <button class="embed__button" type="button" style={thumb ? `background-image:url(${thumb})` : undefined}>
+    <span class="embed__play" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path d="M8 5v14l11-7z" fill="currentColor"></path></svg>
+    </span>
+    <span>{t(lang, 'project.playMedia')}{title ? ` — ${title}` : ''}</span>
+    <span class="embed__note">{t(lang, 'project.thirdParty')} {host}</span>
+  </button>
+</div>
+
+<script>
+  import { onPage } from '../scripts/lifecycle';
+
+  onPage((signal) => {
+    document.addEventListener(
+      'click',
+      (e) => {
+        const btn = (e.target as Element).closest('.embed__button');
+        const box = btn?.closest<HTMLElement>('[data-embed-src]');
+        if (!box) return;
+        const iframe = document.createElement('iframe');
+        iframe.src = box.dataset.embedSrc!;
+        iframe.title = box.dataset.embedTitle ?? '';
+        iframe.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write';
+        iframe.loading = 'lazy';
+        btn!.replaceWith(iframe);
+      },
+      { signal },
+    );
+  });
+</script>
