@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { localize, t, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+---
+
+<BaseLayout lang={lang} path="/" title={t(lang, 'notfound.title')} place={{ kind: 'named', id: 'void' }} kind="notfound">
+  <div class="inner" style="min-height:70vh;display:flex;align-items:center">
+    <header class="page-intro reveal">
+      <p class="eyebrow">404</p>
+      <h1 class="page-title" tabindex="-1">{t(lang, 'notfound.title')}</h1>
+      <p class="page-lead">{t(lang, 'notfound.text')}</p>
+      <p>
+        <a class="chip" href={localize('/', lang)}>{t(lang, 'place.back')}</a>
+        <a class="chip" href={localize('/explore/', lang)}>{t(lang, 'place.all')}</a>
+      </p>
+    </header>
+  </div>
+</BaseLayout>

@@ -1,0 +1,37 @@
+# The "world": camera positions on the artwork for every kind of page.
+#
+# Coordinates are in WORLD UNITS — the artwork is 1210 x 900 units, whatever the image resolution.
+# A camera frames a rectangle `rect: [x, y, width, height]` inside the page's stage:
+#   fit: contain → the whole rectangle is visible;  cover → the rectangle fills the stage
+#   align: [0..1, 0..1] → where the rectangle sits when the stage has spare room (0.5 = centered)
+#   zoom: extra multiplier;  portrait: overrides used on tall (phone) screens
+#   stage: home | focus | backdrop  (where on screen the art is framed — see src/styles/world.css)
+#   look:  full | focus | backdrop | deep  (how dimmed/blurred the art is behind the page)
+#
+# Place (keyword) cameras live in regions.yaml next to each region.
+
+units: [1210, 900]
+maxScale: 4
+
+looks:
+  full: { dim: 0, vignette: 0.35, blur: 0 }
+  focus: { dim: 0.22, vignette: 0.8, blur: 0 }
+  backdrop: { dim: 0.5, vignette: 0.7, blur: 0.9 }
+  deep: { dim: 0.78, vignette: 1, blur: 1 }
+
+cameras:
+  home:
+    rect: [0, 0, 1210, 900]
+    fit: contain
+    align: [1, 0.55]
+    stage: home
+    look: full
+    portrait: { rect: [470, 80, 520, 820], fit: cover, align: [0.5, 0.5] }
+  overview: { rect: [0, 40, 1210, 820], fit: cover, stage: backdrop, look: backdrop }
+  research: { rect: [380, 250, 330, 450], fit: cover, stage: backdrop, look: backdrop }
+  code: { rect: [450, 330, 330, 470], fit: cover, stage: backdrop, look: backdrop }
+  art-music: { rect: [650, 380, 560, 500], fit: cover, stage: backdrop, look: backdrop }
+  about: { rect: [1000, 420, 210, 420], fit: cover, stage: backdrop, look: backdrop }
+  contact: { rect: [1060, 360, 150, 260], fit: cover, stage: backdrop, look: backdrop }
+  brains-and-games: { rect: [0, 100, 600, 760], fit: cover, stage: backdrop, look: backdrop }
+  void: { rect: [1240, 300, 420, 420], fit: cover, stage: backdrop, look: deep }

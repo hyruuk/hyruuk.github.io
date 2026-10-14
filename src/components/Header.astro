@@ -1,0 +1,65 @@
+---
+import { localize, otherLang, pick, t, type Lang } from '../i18n/utils';
+import { site } from '../lib/data';
+import Icon from './Icon.astro';
+
+interface Props {
+  lang: Lang;
+  /** English path of the current page, used for the language switch */
+  path: string;
+  kind: string;
+}
+const { lang, path, kind } = Astro.props;
+const other = otherLang(lang);
+const nav = [
+  { href: '/projects/', label: t(lang, 'nav.projects'), kind: 'projects' },
+  { href: '/about/', label: t(lang, 'nav.about'), kind: 'about' },
+  { href: '/contact/', label: t(lang, 'nav.contact'), kind: 'contact' },
+];
+const rooms = [
+  { href: '/research/', label: t(lang, 'room.research'), cls: 'research' },
+  { href: '/code/', label: t(lang, 'room.code'), cls: 'code' },
+  { href: '/art-music/', label: t(lang, 'room.art-music'), cls: 'art' },
+  { href: '/brains-and-games/', label: t(lang, 'bg.title'), cls: 'community' },
+];
+---
+
+<header class="site-header">
+  <a class="brand" href={localize('/', lang)}>
+    <span class="brand__name">{site.name}</span>
+    <span class="brand__role">{pick(site.role, lang)}</span>
+  </a>
+
+  <nav class="top-nav" aria-label={lang === 'fr' ? 'Navigation principale' : 'Main navigation'}>
+    {
+      nav.map((n) => (
+        <a href={localize(n.href, lang)} aria-current={kind === n.kind ? 'page' : undefined}>
+          {n.label}
+        </a>
+      ))
+    }
+    <a class="lang-switch" href={localize(path, other)} hreflang={other} lang={other} aria-label={t(lang, 'nav.switch')}>
+      {other.toUpperCase()}
+    </a>
+  </nav>
+
+  <details class="mobile-menu">
+    <summary aria-label={t(lang, 'nav.menu')}>
+      <Icon name="menu" size={22} />
+    </summary>
+    <div class="mobile-menu__sheet">
+      <nav aria-label={t(lang, 'nav.menu')}>
+        <a href={localize('/', lang)}>{t(lang, 'nav.home')}</a>
+        {
+          rooms.map((r) => (
+            <a class={`mobile-menu__room mobile-menu__room--${r.cls}`} href={localize(r.href, lang)}>
+              {r.label}
+            </a>
+          ))
+        }
+        {nav.map((n) => <a href={localize(n.href, lang)}>{n.label}</a>)}
+        <a href={localize(path, other)} hreflang={other} lang={other}>{t(lang, 'nav.switch')}</a>
+      </nav>
+    </div>
+  </details>
+</header>

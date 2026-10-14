@@ -1,0 +1,126 @@
+---
+/** A room: Research & Publications, Data & Code, Art & Music — the same projects as the places, sorted by type. */
+import EventList from '../components/EventList.astro';
+import Icon from '../components/Icon.astro';
+import ProjectTile from '../components/ProjectTile.astro';
+import PubList from '../components/PubList.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { t, type Lang } from '../i18n/utils';
+import { getEvents, getKeywords, getPublications, projectsForSection, type Section } from '../lib/content';
+import { site } from '../lib/data';
+
+interface Props {
+  lang: Lang;
+  section: Section;
+}
+const { lang, section } = Astro.props;
+const accent = { research: 'var(--research)', code: 'var(--code)', 'art-music': 'var(--art)' }[section];
+const projects = await projectsForSection(section, lang);
+const keywords = await getKeywords();
+const allPubs = await getPublications();
+const allEvents = await getEvents();
+
+const pubs =
+  section === 'research'
+    ? allPubs.filter((p) => !['dataset', 'software'].includes(p.data.type))
+    : section === 'code'
+      ? allPubs.filter((p) => ['dataset', 'software'].includes(p.data.type))
+      : [];
+const events =
+  section === 'research'
+    ? allEvents.filter((e) => ['talk', 'poster', 'workshop'].includes(e.data.type))
+    : section === 'art-music'
+      ? allEvents.filter((e) => ['performance', 'demo', 'media', 'organization'].includes(e.data.type))
+      : allEvents.filter((e) => e.data.type === 'teaching');
+const usedKeywords = new Set(projects.flatMap((p) => p.data.keywords));
+const filterKeywords = keywords.filter((k) => usedKeywords.has(k.id));
+const title = t(lang, `room.${section}` as 'room.research');
+const eventsTitle =
+  section === 'research' ? t(lang, 'section.talks') : section === 'art-music' ? t(lang, 'section.performances') : t(lang, 'about.teaching');
+---
+
+<BaseLayout lang={lang} path={`/${section}/`} title={title} place={{ kind: 'named', id: section }} kind="section" room={section}>
+  <div class="inner">
+    <header class="page-intro reveal" style={`--accent:${accent}`}>
+      <p class="eyebrow">{lang === 'fr' ? 'Salle' : 'Room'} {{ research: '01', code: '02', 'art-music': '03' }[section]}</p>
+      <h1 class="page-title" tabindex="-1">{title}</h1>
+      <p class="page-lead">{t(lang, `section.${section}.intro` as 'section.research.intro')}</p>
+      {
+        section === 'code' && (
+          <p>
+            <a class="chip chip--code" href={`https://github.com/${site.handle}`} rel="noopener" target="_blank">
+              <Icon name="github" size={14} /> github.com/{site.handle}
+            </a>
+          </p>
+        )
+      }
+    </header>
+
+    <div class="filters reveal" data-filters aria-label={t(lang, 'pubs.filter')}>
+      <button class="chip" type="button" data-filter="" aria-pressed="true">{t(lang, 'pubs.all')}</button>
+      {
+        filterKeywords.map((k) => (
+          <button class="chip" type="button" data-filter={k.id} aria-pressed="false" style={`--accent:${k.data.accent}`}>
+            {k.data.label[lang]}
+          </button>
+        ))
+      }
+    </div>
+
+    <section class="block" style="margin-top:0">
+      <div class="tile-grid">
+        {projects.map((p, i) => <ProjectTile project={p} lang={lang} size={i < 2 ? 'L' : 'M'} index={i} level="h2" />)}
+      </div>
+    </section>
+
+    {
+      pubs.length > 0 && (
+        <section class="block">
+          <h2 class="block__title">{section === 'code' ? t(lang, 'section.software') : t(lang, 'section.all')}</h2>
+          <PubList pubs={pubs} lang={lang} showKeywords />
+        </section>
+      )
+    }
+
+    {
+      events.length > 0 && (
+        <section class="block">
+          <h2 class="block__title">{eventsTitle}</h2>
+          <EventList events={events} lang={lang} showKeywords />
+        </section>
+      )
+    }
+  </div>
+  <script>
+    import { onPage } from '../scripts/lifecycle';
+
+    // Filter tiles and lists by place; ?theme=<keyword> pre-selects one (links from place pages).
+    onPage((signal) => {
+      const bar = document.querySelector<HTMLElement>('[data-filters]');
+      if (!bar) return;
+      const apply = (kw: string) => {
+        bar.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === kw)));
+        document.querySelectorAll<HTMLElement>('main [data-keywords]').forEach((el) => {
+          const match = !kw || (el.dataset.keywords ?? '').split(' ').includes(kw);
+          el.toggleAttribute('data-filtered-out', !match);
+        });
+      };
+      bar.addEventListener(
+        'click',
+        (e) => {
+          const b = (e.target as Element).closest<HTMLButtonElement>('[data-filter]');
+          if (!b) return;
+          const kw = b.dataset.filter ?? '';
+          apply(kw);
+          const url = new URL(location.href);
+          if (kw) url.searchParams.set('theme', kw);
+          else url.searchParams.delete('theme');
+          history.replaceState(history.state, '', url);
+        },
+        { signal },
+      );
+      const initial = new URL(location.href).searchParams.get('theme');
+      if (initial && bar.querySelector(`[data-filter="${CSS.escape(initial)}"]`)) apply(initial);
+    });
+  </script>
+</BaseLayout>

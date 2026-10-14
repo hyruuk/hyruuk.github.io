@@ -1,0 +1,69 @@
+---
+import { getEntry, render } from 'astro:content';
+import EventList from '../components/EventList.astro';
+import Icon from '../components/Icon.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { pick, t, type Lang } from '../i18n/utils';
+import { getEvents } from '../lib/content';
+import { site, text, timeline } from '../lib/data';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const entry = (await getEntry('pages', `about-${lang}`)) ?? (await getEntry('pages', 'about-en'))!;
+const { Content } = await render(entry);
+const outreach = (await getEvents()).filter((e) => ['media', 'teaching', 'organization'].includes(e.data.type));
+---
+
+<BaseLayout lang={lang} path="/about/" title={t(lang, 'about.title')} place={{ kind: 'named', id: 'about' }} kind="about" room="about">
+  <div class="inner">
+    <div class="two-col">
+      <div>
+        <header class="page-intro reveal">
+          <p class="eyebrow">{pick(site.position, lang)}</p>
+          <h1 class="page-title" tabindex="-1">{t(lang, 'about.title')}</h1>
+          <p class="epigraph">“{pick(site.quote, lang)}”</p>
+        </header>
+        <div class="prose reveal">
+          <Content />
+        </div>
+        {
+          site.cv && (
+            <p class="reveal">
+              <a class="email-button" href={site.cv}>
+                <Icon name="external" size={16} /> {t(lang, 'about.cv')}
+              </a>
+            </p>
+          )
+        }
+      </div>
+
+      <aside class="reveal" style="--i:2">
+        <h2 class="block__title">{t(lang, 'about.timeline')}</h2>
+        <ol class="timeline">
+          {
+            timeline.map((item) => (
+              <li>
+                <span class="timeline__when">{item.when}</span>
+                <div>
+                  <div class="timeline__what">{text(item.what, lang)}</div>
+                  {item.where && <div class="timeline__where">{text(item.where, lang)}</div>}
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </aside>
+    </div>
+
+    {
+      outreach.length > 0 && (
+        <section class="block">
+          <h2 class="block__title">{t(lang, 'about.teaching')}</h2>
+          <EventList events={outreach} lang={lang} />
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>

@@ -1,0 +1,53 @@
+/* Design tokens — sampled from the mockup (Neural Odyssey_ Games, Music, Mind.png). */
+:root {
+  /* colours */
+  --bg: #060d14;
+  --bg-raise: #0a131d;
+  --bg-glass: rgba(6, 13, 20, 0.78);
+  --bg-glass-strong: rgba(6, 13, 20, 0.9);
+  --line: #253240;
+  --line-soft: rgba(37, 50, 64, 0.6);
+  --text: #f2f7fb;
+  --text-strong: #ffffff;
+  --text-soft: #c9d4de;
+  --text-muted: #8b9aab;
+  --text-faint: #5d6c7c;
+
+  /* the three rooms = the three segments of the mockup's gradient bar */
+  --research-a: #009df1;
+  --research-b: #42b1e6;
+  --code-a: #7273ee;
+  --code-b: #9263f0;
+  --art-a: #dc67e6;
+  --art-b: #ee649e;
+  --research: #22a8ef;
+  --code: #8268f0;
+  --art: #e765c2;
+  --community: #8b93ff;
+
+  /* type */
+  --font-sans: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --track-wide: 0.32em;
+  --track-label: 0.24em;
+  --track-nav: 0.22em;
+
+  /* layout */
+  --panel-w: clamp(280px, 20.8vw, 400px);
+  --panel-gap: 8px;
+  --rail-w: 76px;
+  --gutter: clamp(16px, 4.1vw, 72px);
+  --header-h: clamp(84px, 13vh, 132px);
+  --radius: 14px;
+
+  /* motion */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.2, 1);
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --rail-w: 0px;
+    --header-h: 76px;
+  }
+}

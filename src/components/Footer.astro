@@ -1,0 +1,29 @@
+---
+import { t, type Lang } from '../i18n/utils';
+import { site } from '../lib/data';
+import Icon from './Icon.astro';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer reveal">
+  <ul class="profiles" aria-label={t(lang, 'contact.profiles')}>
+    {
+      site.profiles.map((p) => (
+        <li>
+          <a href={p.url} rel="me noopener" target="_blank" aria-label={p.label} title={p.label}>
+            <Icon name={p.kind} size={16} />
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="site-footer__meta">
+    © {year} {site.name} · {t(lang, 'footer.made')} ·
+    <a href={`https://github.com/${site.handle}/${site.handle}.github.io`} rel="noopener" target="_blank">{t(lang, 'footer.source')}</a>
+  </p>
+</footer>

@@ -1,0 +1,11 @@
+---
+import PlaceView from '../../views/PlaceView.astro';
+import { getKeywords } from '../../lib/content';
+
+export async function getStaticPaths() {
+  return (await getKeywords()).map((k) => ({ params: { keyword: k.id } }));
+}
+const { keyword } = Astro.params;
+---
+
+<PlaceView lang="en" id={keyword} />

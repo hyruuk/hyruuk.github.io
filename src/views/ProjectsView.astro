@@ -1,0 +1,79 @@
+---
+/** Every project, grouped by place (in panorama order), filterable by room. */
+import ProjectTile from '../components/ProjectTile.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { localize, t, type Lang } from '../i18n/utils';
+import { getKeywords, getProjects, SECTION_ORDER } from '../lib/content';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const keywords = await getKeywords();
+const projects = await getProjects(lang);
+const groups = keywords
+  .map((k) => ({ k, items: projects.filter((p) => p.primary === k.id) }))
+  .filter((g) => g.items.length > 0);
+---
+
+<BaseLayout lang={lang} path="/projects/" title={t(lang, 'projects.title')} place={{ kind: 'named', id: 'overview' }} kind="projects">
+  <div class="inner">
+    <header class="page-intro reveal">
+      <p class="eyebrow">{projects.length} · {t(lang, 'place.projects')}</p>
+      <h1 class="page-title" tabindex="-1">{t(lang, 'projects.title')}</h1>
+      <p class="page-lead">{t(lang, 'projects.intro')}</p>
+    </header>
+
+    <div class="filters reveal" data-room-filters>
+      <button class="chip" type="button" data-room="" aria-pressed="true">{t(lang, 'projects.all')}</button>
+      {
+        SECTION_ORDER.map((s) => (
+          <button class={`chip chip--${s}`} type="button" data-room={s} aria-pressed="false">
+            {t(lang, `room.${s}` as 'room.research')}
+          </button>
+        ))
+      }
+    </div>
+
+    {
+      groups.map((g) => (
+        <section class="block" data-group style={`--accent:${g.k.data.accent}`}>
+          <h2 class="block__title">
+            <a href={localize(`/explore/${g.k.id}/`, lang)} style="text-decoration:none">
+              {g.k.data.label[lang]}
+            </a>
+          </h2>
+          <div class="tile-grid">
+            {g.items.map((p, i) => (
+              <ProjectTile project={p} lang={lang} size="M" index={i} />
+            ))}
+          </div>
+        </section>
+      ))
+    }
+  </div>
+  <script>
+    import { onPage } from '../scripts/lifecycle';
+
+    onPage((signal) => {
+      const bar = document.querySelector<HTMLElement>('[data-room-filters]');
+      if (!bar) return;
+      bar.addEventListener(
+        'click',
+        (e) => {
+          const b = (e.target as Element).closest<HTMLButtonElement>('[data-room]');
+          if (!b) return;
+          const room = b.dataset.room ?? '';
+          bar.querySelectorAll('[data-room]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          document.querySelectorAll<HTMLElement>('main .tile').forEach((tile) => {
+            tile.toggleAttribute('data-filtered-out', !!room && !(tile.dataset.rooms ?? '').split(' ').includes(room));
+          });
+          document.querySelectorAll<HTMLElement>('[data-group]').forEach((g) => {
+            g.toggleAttribute('data-filtered-out', !g.querySelector('.tile:not([data-filtered-out])'));
+          });
+        },
+        { signal },
+      );
+    });
+  </script>
+</BaseLayout>

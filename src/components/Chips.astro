@@ -1,0 +1,32 @@
+---
+/** Keyword chips (→ places) and room chips (→ rooms). */
+import { localize, t, type Lang } from '../i18n/utils';
+import { getKeywords } from '../lib/content';
+
+interface Props {
+  lang: Lang;
+  keywords?: string[];
+  rooms?: string[];
+  class?: string;
+}
+const { lang, keywords = [], rooms = [], class: cls } = Astro.props;
+const all = await getKeywords();
+const kws = all.filter((k) => keywords.includes(k.id));
+---
+
+{
+  (kws.length > 0 || rooms.length > 0) && (
+    <div class:list={['chips', cls]}>
+      {rooms.map((r) => (
+        <a class={`chip chip--${r}`} href={localize(r === 'community' ? '/brains-and-games/' : `/${r}/`, lang)}>
+          {r === 'community' ? t(lang, 'room.community') : t(lang, `room.${r}` as 'room.research')}
+        </a>
+      ))}
+      {kws.map((k) => (
+        <a class="chip" href={localize(`/explore/${k.id}/`, lang)} style={`--accent:${k.data.accent}`}>
+          {k.data.label[lang]}
+        </a>
+      ))}
+    </div>
+  )
+}

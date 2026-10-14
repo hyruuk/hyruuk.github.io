@@ -1,0 +1,30 @@
+---
+/** The collage of a place page — layout computed by src/lib/compose.ts, never placed by hand. */
+import type { Lang } from '../i18n/utils';
+import { compose } from '../lib/compose';
+import type { Project } from '../lib/content';
+import ProjectTile from './ProjectTile.astro';
+
+interface Props {
+  projects: Project[];
+  seed: string;
+  lang: Lang;
+}
+const { projects, seed, lang } = Astro.props;
+const { left, right } = compose(
+  projects,
+  seed,
+  (p) => p.data.weight,
+  (p) => p.data.featured,
+);
+let i = 0;
+---
+
+<div class="composition">
+  <div class="composition__col composition__col--left">
+    {left.map((c) => <ProjectTile project={c.item} lang={lang} size={c.size} align={c.align} offset={c.offset} index={i++} />)}
+  </div>
+  <div class="composition__col composition__col--right">
+    {right.map((c) => <ProjectTile project={c.item} lang={lang} size={c.size} align={c.align} offset={c.offset} index={i++} />)}
+  </div>
+</div>

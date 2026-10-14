@@ -1,0 +1,147 @@
+---
+import { Picture } from 'astro:assets';
+import { render } from 'astro:content';
+import Chips from '../components/Chips.astro';
+import EventList from '../components/EventList.astro';
+import Icon from '../components/Icon.astro';
+import MediaEmbed from '../components/MediaEmbed.astro';
+import ProjectTile from '../components/ProjectTile.astro';
+import PubList from '../components/PubList.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { formatSpan, localize, t, type Lang } from '../i18n/utils';
+import { eventsOfProject, getKeywords, getProject, publicationsOfProject, relatedProjects } from '../lib/content';
+
+interface Props {
+  lang: Lang;
+  id: string;
+}
+const { lang, id } = Astro.props;
+const p = (await getProject(id, lang))!;
+const { Content } = await render(lang === 'fr' && p.frEntry ? p.frEntry : p.entry);
+const pubs = await publicationsOfProject(id);
+const events = await eventsOfProject(id);
+const related = await relatedProjects(p, lang, 3);
+const kw = (await getKeywords()).find((k) => k.id === p.primary)!;
+const roomLabel = p.room === 'community' ? t(lang, 'room.community') : t(lang, `room.${p.room}` as 'room.research');
+---
+
+<BaseLayout
+  lang={lang}
+  path={`/projects/${id}/`}
+  title={p.title}
+  description={p.summary}
+  place={{ kind: 'project', keyword: p.primary }}
+  kind="project"
+  room={p.room}
+>
+  <div class="inner">
+    <article class="project">
+      <div>
+        <header class="page-intro reveal" style={`--accent:${kw.data.accent}`}>
+          <p class="eyebrow">{roomLabel} · {formatSpan(p.data.start, p.data.end, lang)}</p>
+          <h1 class="page-title" tabindex="-1">{p.title}</h1>
+          <p class="page-lead">{p.summary}</p>
+        </header>
+
+        {
+          p.data.cover && (
+            <figure class={`project__cover project__cover--${p.room} reveal`}>
+              <div class="tile__media" data-morph={p.id}>
+                <Picture
+                  src={p.data.cover}
+                  alt={p.coverAlt ?? ''}
+                  widths={[640, 960, 1400]}
+                  sizes="(max-width: 1023px) 92vw, 760px"
+                  formats={['avif', 'webp']}
+                  loading="eager"
+                />
+              </div>
+              {p.data.coverCredit && <figcaption class="list__sub">{p.data.coverCredit}</figcaption>}
+            </figure>
+          )
+        }
+
+        {!p.translated && <p class="notice" lang="fr">{t('fr', 'project.notTranslated')}</p>}
+
+        <div class="prose reveal" lang={p.translated ? undefined : 'en'}>
+          <Content />
+        </div>
+
+        {p.data.media.map((m) => <MediaEmbed kind={m.kind} id={m.id} title={m.title} lang={lang} />)}
+
+        {
+          pubs.length > 0 && (
+            <section class="block">
+              <h2 class="block__title">{t(lang, 'project.papers')}</h2>
+              <PubList pubs={pubs} lang={lang} />
+            </section>
+          )
+        }
+        {
+          events.length > 0 && (
+            <section class="block">
+              <h2 class="block__title">{t(lang, 'project.events')}</h2>
+              <EventList events={events} lang={lang} />
+            </section>
+          )
+        }
+      </div>
+
+      <aside class="project__aside reveal">
+        {
+          p.data.links.length > 0 && (
+            <div>
+              <h2>{t(lang, 'project.links')}</h2>
+              <div class="links">
+                {p.data.links.map((l) => (
+                  <a href={l.url} rel="noopener" target="_blank">
+                    <span>{l.label}</span>
+                    <Icon name="external" size={14} />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )
+        }
+        {
+          p.data.role && (
+            <div>
+              <h2>{t(lang, 'project.role')}</h2>
+              <p class="list__sub" lang="en">{p.data.role}</p>
+            </div>
+          )
+        }
+        {
+          p.data.collaborators.length > 0 && (
+            <div>
+              <h2>{t(lang, 'project.with')}</h2>
+              <p class="list__sub">{p.data.collaborators.join(' · ')}</p>
+            </div>
+          )
+        }
+        <div>
+          <h2>{lang === 'fr' ? 'Lieux & salles' : 'Places & rooms'}</h2>
+          <Chips lang={lang} keywords={p.data.keywords} rooms={p.data.sections} />
+        </div>
+      </aside>
+    </article>
+
+    {
+      related.length > 0 && (
+        <section class="block">
+          <h2 class="block__title">
+            {t(lang, 'project.more')} {kw.data.label[lang]}
+            <a class="list__link" href={localize(`/explore/${kw.id}/`, lang)} style="margin-left:auto">
+              {t(lang, 'place.enter')} →
+            </a>
+          </h2>
+          <div class="tile-grid">
+            {related.map((r, i) => (
+              <ProjectTile project={r} lang={lang} size="M" index={i} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>

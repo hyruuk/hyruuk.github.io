@@ -1,0 +1,56 @@
+# Site-wide settings. The build checks this file: a typo stops the build with a clear message
+# and the live site stays on its last good version.
+
+name: Yann Harel
+handle: hyruuk
+url: https://hyruuk.github.io
+
+# false while the site is being built: search engines are asked not to index it.
+# Set to true on launch day.
+launched: false
+
+# Shown obfuscated on the page (assembled by the browser, never in plain text in the HTML).
+email: yharel109@gmail.com
+
+role:
+  en: Cognitive neuroscientist
+  fr: Neurosciences cognitives
+
+position:
+  en: Postdoc @ Boston College · Co-founder, Kairos ~ Hive
+  fr: Postdoc @ Boston College · Kairos ~ Hive
+
+# The old mockup quote — now shown on the About page (the home panel shows HYRUUK instead).
+quote:
+  en: Better to be a curious fool than a closed mind.
+  fr: Mieux vaut la folie curieuse que l'esprit fermé.
+
+description:
+  en: >-
+    Cognitive neuroscientist using neuroimaging, videogames, art and brain-machine interfaces
+    to explore biological and artificial intelligence.
+  fr: >-
+    Neuroimagerie, jeux vidéo, art et interfaces cerveau-machine pour explorer
+    l'intelligence biologique et artificielle.
+
+profiles:
+  - { kind: github, label: GitHub, url: "https://github.com/hyruuk" }
+  - { kind: orcid, label: ORCID, url: "https://orcid.org/0000-0002-8970-1983" }
+  - { kind: scholar, label: Google Scholar, url: "https://scholar.google.com/citations?user=2K-2LacAAAAJ" }
+  - { kind: bluesky, label: Bluesky, url: "https://bsky.app/profile/hyruuk.bsky.social" }
+  - { kind: instagram, label: Instagram, url: "https://www.instagram.com/hyruuk/" }
+  - { kind: kairos, label: "Kairos ~ Hive", url: "https://kairos-hive.org/about/yann-harel" }
+  # Confirm these are yours, then remove the leading "# ":
+  # - { kind: x, label: X, url: "https://x.com/yharel109" }
+  # - { kind: linkedin, label: LinkedIn, url: "https://www.linkedin.com/in/yann-harel-877017127" }
+
+discord:
+  name: Brains & Games
+  # Paste a permanent invite link (Discord → Server Settings → Invites → "Never expire").
+  invite: ""
+  # Optional: the server ID, to show a live "N online" count. Requires Server Settings → Widget → enabled.
+  serverId: ""
+
+# Public CV (PDF in public/cv/). Leave empty to hide the link. Never publish the version with
+# your phone number and home address.
+cv: ""

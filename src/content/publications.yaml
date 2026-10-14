@@ -1,0 +1,292 @@
+# Publications. Newest first is not required — the site sorts them.
+#
+# Add one with `npm run add` (paste the DOI) or the "New item" form on GitHub, or copy an entry.
+#   type:     article | preprint | conference | abstract | chapter | thesis | dataset | software | patent | essay
+#   status:   published (default) | in-press | under-review | in-preparation | preprint
+#   doi:      without "https://doi.org/";  url: any link (used instead of the DOI when given)
+#   keywords: places (see keywords.yaml) — also inherited from the linked projects
+#   projects: project folder names this item belongs to (the project page lists it automatically)
+# Your name is highlighted automatically in author lists.
+
+# ---------- first author ----------
+
+- id: harel-mario-dataset
+  type: dataset
+  status: in-preparation
+  title: "CNeuromod Mario: a large-scale longitudinal fMRI dataset of naturalistic videogame play"
+  authors: ["Harel, Y.", "Pinsard, B.", "Boyle, J. A.", "Bellec, L."]
+  year: 2026
+  url: https://docs.cneuromod.ca/datasets/mario.html
+  data: https://github.com/courtois-neuromod/mario
+  projects: [cneuromod-mario]
+  featured: true
+
+- id: harel-saflow
+  type: article
+  status: in-preparation
+  title: Fluctuations in sustained attention performance relate to both periodic and aperiodic components of the MEG spectrum
+  authors: ["Harel, Y.", "El Khantour, C.", "Dehgan, A.", "Bellemare-Pepin, A.", "Landry, M.", "Bellec, L.", "Jerbi, K."]
+  year: 2026
+  code: https://doi.org/10.5281/zenodo.16450731
+  projects: [saflow]
+
+- id: harel2026gamer
+  type: article
+  title: "Gamer in the scanner: Event-related analysis of fMRI activity during retro videogame play guided by automated annotations of game content"
+  authors: ["Harel, Y.", "Pinsard, B.", "Boyle, J.", "Borghesani, V.", "Le Clei, M.", "Mignot, P. H.", "St-Laurent, M.", "Jerbi, K.", "Bellec, L."]
+  year: 2026
+  venue: Imaging Neuroscience, 4, IMAG.a.1256
+  doi: 10.1162/IMAG.a.1256
+  code: https://doi.org/10.5281/zenodo.15628557
+  data: https://docs.cneuromod.ca/datasets/shinobi.html
+  projects: [gamer-in-the-scanner]
+  featured: true
+
+- id: harel2023controller
+  type: article
+  title: Open design of a reproducible videogame controller for MRI and MEG
+  authors: ["Harel, Y.*", "Cyr, A.*", "Boyle, J.", "Pinsard, B.", "Bernard, J.", "Fourcade, M. F.", "Aggarwal, H.", "Ponce, A. F.", "Thirion, B.", "Jerbi, K.", "Bellec, P."]
+  year: 2023
+  venue: PLOS ONE, 18(11), e0290158
+  doi: 10.1371/journal.pone.0290158
+  code: https://doi.org/10.5281/zenodo.7847577
+  data: https://doi.org/10.5281/zenodo.7847544
+  note: "* equal contribution"
+  projects: [mri-meg-controller]
+  featured: true
+
+- id: harel2025brittle
+  type: abstract
+  title: "Brittle Brain Encoding: Poor Out-of-Distribution Generalization Shows the Human Brain is neither a NES nor a Four-Layer CNN"
+  authors: ["Harel, Y.*", "Paugam, F.*", "St-Laurent, M.", "Bellec, L."]
+  year: 2025
+  venue: Cognitive Computational Neuroscience (CCN 2025), Amsterdam — poster
+  url: https://2025.ccneuro.org/abstract_pdf/Harel_2025_Brittle_Brain_Encoding_Poor_Out-of-Distribution_Generalization.pdf
+  code: https://doi.org/10.5281/zenodo.15642065
+  note: "* equal contribution"
+  projects: [brains-vs-models]
+
+- id: harel2025mariha
+  type: conference
+  title: "Human-AI Alignment of Learning Trajectories in Video Games: a Continual Reinforcement Learning benchmark proposal"
+  authors: ["Harel, Y.*", "Bellec, L.*", "Paugam, F.", "Delhaye, H.", "Durand, A."]
+  year: 2025
+  venue: Reinforcement Learning and Video Games Workshop @ RLC 2025, Edmonton
+  url: https://openreview.net/forum?id=YAVB439L9X
+  code: https://github.com/courtois-neuromod/MariHA
+  note: "* equal contribution"
+  projects: [mariha]
+
+- id: harel-music-rehab
+  type: chapter
+  status: under-review
+  title: "New Technologies and Tools in Music-based Rehabilitation: Artificial Intelligence and Biometric Sensing"
+  authors: ["Harel, Y.", "Bellemare, A.", "Estarellas, M.", "Hadid, V.", "Thölke, P.", "Jerbi, K."]
+  year: 2026
+  venue: Oxford Handbook on Music Neuroscience and Neurorehabilitation (ed. S. Dalla Bella)
+  keywords: [music, bci, neuro-ai]
+
+- id: harel2019cogsci
+  type: abstract
+  title: Exploring cognitive states through real-time classification and sonification of brain data
+  authors: ["Harel, Y.", "Bellemare, A.", "Dehgan, A.", "Saive, A.-L.", "Jerbi, K."]
+  year: 2019
+  venue: Proceedings of the 41st Annual Meeting of the Cognitive Science Society (CogSci 2019), Montréal
+  pdf: https://journalpub.escholarship.org/cognitivesciencesociety/article/29181/galley/19052/download/
+  projects: [coco-brain-channel]
+
+- id: harel2018incf
+  type: abstract
+  title: "CoCo Brain Channel: Algorithmic music composition through real-time EEG sonification"
+  authors: ["Harel, Y.*", "Bellemare-Pépin, A.*", "Dehgan, A.", "Saive, A.-L.", "Jerbi, K."]
+  year: 2018
+  venue: Neuroinformatics 2018 (INCF), Montréal
+  doi: 10.12751/incf.ni2018.0079
+  note: "* equal contribution"
+  projects: [coco-brain-channel]
+
+# ---------- theses ----------
+
+- id: harel2024phd
+  type: thesis
+  title: "Du flux cérébral au flow psychologique : vers une étude de la fluctuation des états attentionnels par la neuroimagerie du jeu vidéo"
+  authors: ["Harel, Y."]
+  year: 2024
+  venue: PhD thesis, Université de Montréal (supervised by Karim Jerbi & Lune Bellec)
+  doi: 10.71781/18846
+  url: https://umontreal.scholaris.ca/handle/1866/40800
+  projects: [phd-thesis]
+
+- id: harel2016msc
+  type: thesis
+  title: "Le décodage des expressions faciales émotionnelles à travers différentes bandes de fréquences spatiales et ses interactions avec l'anxiété"
+  authors: ["Harel, Y."]
+  year: 2016
+  venue: MSc thesis, Université de Montréal (supervised by Franco Lepore & Fabien D'Hondt)
+  doi: 10.71781/17897
+  url: https://umontreal.scholaris.ca/handle/1866/18812
+  keywords: [neuroimaging]
+
+# ---------- co-authored ----------
+
+- id: kemtur2026imitation
+  type: article
+  title: Behavioral imitation with artificial neural networks leads to personalized models of brain dynamics during videogame play
+  authors: ["Kemtur, A.", "Paugam, F.", "Pinsard, B.", "Harel, Y.", "Sainath, P.", "Le Clei, M.", "Boyle, J.", "Jerbi, K.", "Bellec, L."]
+  year: 2026
+  venue: Imaging Neuroscience, 4, IMAG.a.1286
+  doi: 10.1162/imag.a.1286
+  projects: [brains-vs-models]
+
+- id: subramani2026lsd
+  type: article
+  title: LSD reconfigures cortical dynamics through faster brain rhythms and increased fractal dimension
+  authors: ["Subramani, V.", "Nest, T.", "Pascarella, A.", "Brunel, J.", "Mantilla-Ramos, Y. J.", "Harel, Y.", "Muthukumaraswamy, S.", "Carhart-Harris, R.", "Lioi, G.", "Farrugia, N.", "Jerbi, K."]
+  year: 2026
+  venue: Communications Biology, 9, 1244
+  doi: 10.1038/s42003-026-10629-7
+  projects: [lsd-brain-dynamics]
+
+- id: subramani2026harmonics
+  type: preprint
+  status: preprint
+  title: "LSD Relaxes Structural Constraints on Brain Dynamics: A Connectome Harmonic MEG Study"
+  authors: ["Subramani, V.", "Pascarella, A.", "Brunel, J.", "Harel, Y.", "Muthukumaraswamy, S.", "Carhart-Harris, R.", "Jerbi, K.", "Lioi, G.", "Farrugia, N."]
+  year: 2026
+  venue: bioRxiv
+  doi: 10.64898/2026.03.02.709138
+  projects: [lsd-brain-dynamics]
+
+- id: bellemare2026creativity
+  type: article
+  title: Divergent creativity in humans and large language models
+  authors: ["Bellemare-Pepin, A.", "Lespinasse, F.", "Thölke, P.", "Harel, Y.", "Mathewson, K.", "Olson, J. A.", "Bengio, Y.", "Jerbi, K."]
+  year: 2026
+  venue: Scientific Reports, 16, 1279
+  doi: 10.1038/s41598-025-25157-3
+  projects: [creativity-humans-machines]
+  featured: true
+
+- id: bellemare2026mythologies
+  type: essay
+  title: "Bio-Adaptive Mythologies: Envisioning a Cyber-Ecology of Narrative Design"
+  authors: ["Bellemare-Pepin, A.", "Estarellas, M.", "Thölke, P.", "Lespinasse, F.", "Lortie, G. G.", "Harel, Y."]
+  year: 2026
+  venue: Metacritic Journal for Comparative Studies and Theory, 12(1), 36–61
+  doi: 10.24193/mjcst.2026.20.03
+  projects: [kairos-hive]
+
+- id: dehgan2025meegnet
+  type: preprint
+  status: preprint
+  title: "MEEGNet: An open source python library for the application of convolutional neural networks to MEG"
+  authors: ["Dehgan, A.", "Pascarella, A.", "Harel, Y.", "Rish, I.", "Jerbi, K."]
+  year: 2025
+  venue: bioRxiv
+  doi: 10.1101/2025.03.20.644276
+  code: https://github.com/arthurdehgan/meegnet
+  keywords: [neuro-ai, neuroimaging]
+
+- id: mekki2025synuclein
+  type: preprint
+  status: preprint
+  title: Predicting cognitive decline in prodromal synucleinopathies using clinical markers and machine learning
+  authors: ["Mekki-Berrada, L.", "Dehgan, A.", "Postuma, R.", "Harel, Y.", "Abdelhedi, H.", "Montplaisir, J.", "Jerbi, K.", "Gagnon, J.-F."]
+  year: 2025
+  venue: Research Square
+  doi: 10.21203/rs.3.rs-4619161/v2
+  keywords: [neuro-ai]
+
+- id: tholke2024poet
+  type: conference
+  title: "Bio-Mechanical Poet: An Immersive Audiovisual Playground for Brain Signals and Generative AI"
+  authors: ["Thölke, P.", "Bellemare-Pepin, A.", "Harel, Y.", "Lespinasse, F.", "Jerbi, K."]
+  year: 2024
+  venue: Proceedings of the 15th International Conference on Computational Creativity (ICCC'24)
+  pdf: https://computationalcreativity.net/iccc24/papers/ICCC24_paper_130.pdf
+  projects: [bio-mechanical-poet]
+
+- id: bellemare2024retina
+  type: conference
+  title: "Introducing ReTiNA-Cinema: Real-Time Neuro-Augmented Cinema via Generative AI"
+  authors: ["Bellemare-Pepin, A.", "Thölke, P.", "Harel, Y.", "Estarellas, M.", "Jerbi, K."]
+  year: 2024
+  venue: NeurIPS 2024 Workshop on Creativity & Generative AI
+  pdf: https://creativity-ai.github.io/assets/papers/55.pdf
+  code: https://github.com/KairosHive/retina-cinema
+  projects: [retina-cinema]
+
+- id: roy2024vfc
+  type: conference
+  title: "V F C: An Adaptive Cinema Experience Powered by Brain-computer Interface"
+  authors: ["Roy, C. S.", "Bellemare-Pepin, A.", "Harel, Y.", "Lambert, P."]
+  year: 2024
+  venue: ISEA2024 — 29th International Symposium on Electronic Art, Brisbane
+  url: https://www.isea-symposium-archives.org/?p=81137
+  pdf: https://www.isea-symposium-archives.org/wp-content/uploads/2025/01/2024_Antoine_V_F_C_An_Adaptive_Cinema_Experience.pdf
+  projects: [vfc-adaptive-cinema]
+
+- id: roy2024patent
+  type: patent
+  title: Method and apparatus for a user-adaptive audiovisual experience
+  authors: ["Roy, C. S.", "Lambert, P.", "Harel, Y.", "Bellemare-Pepin, A."]
+  year: 2024
+  venue: US Patent Application 18/233,546 (published as US 2024/0054159 A1)
+  url: https://patents.google.com/patent/US20240054159A1/en
+  projects: [vfc-adaptive-cinema]
+
+- id: oswald2023nos
+  type: article
+  title: Autonomic nervous system modulation during self-induced non-ordinary states of consciousness
+  authors: ["Oswald, V.", "Vanhaudenhuyse, A.", "Annen, J.", "Martial, C.", "Bicego, A.", "Rousseaux, F.", "Sombrun, C.", "Harel, Y.", "Faymonville, M.-E.", "Laureys, S.", "Jerbi, K.", "Gosseries, O."]
+  year: 2023
+  venue: Scientific Reports, 13, 15811
+  doi: 10.1038/s41598-023-42393-7
+  projects: [non-ordinary-states]
+
+- id: tholke2023imbalance
+  type: article
+  title: "Class imbalance should not throw you off balance: Choosing the right classifiers and performance metrics for brain decoding with imbalanced data"
+  authors: ["Thölke, P.", "Mantilla-Ramos, Y. J.", "Abdelhedi, H.", "Maschke, C.", "Dehgan, A.", "Harel, Y.", "Kemtur, A.", "Mekki-Berrada, L.", "Sahraoui, M.", "Young, T.", "Bellemare-Pépin, A.", "El Khantour, C.", "Landry, M.", "Pascarella, A.", "Hadid, V.", "Combrisson, E.", "O'Byrne, J.", "Jerbi, K."]
+  year: 2023
+  venue: NeuroImage, 277, 120253
+  doi: 10.1016/j.neuroimage.2023.120253
+  code: https://github.com/thecocolab/data-imbalance
+  keywords: [neuro-ai, neuroimaging]
+
+- id: kemtur2022ccn
+  type: conference
+  title: "AI-based modeling of brain and behavior: Combining neuroimaging, imitation learning and video games"
+  authors: ["Kemtur, A.", "Paugam, F.", "Pinsard, B.", "Sainath, P.", "Harel, Y.", "Le Clei, M.", "Boyle, J.", "Jerbi, K.", "Bellec, P."]
+  year: 2022
+  venue: Conference on Cognitive Computational Neuroscience (CCN 2022)
+  doi: 10.32470/ccn.2022.1303-0
+  projects: [brains-vs-models]
+
+- id: bellemare2022pareidolia
+  type: article
+  title: "Processing visual ambiguity in fractal patterns: Pareidolia as a sign of creativity"
+  authors: ["Bellemare-Pepin, A.", "Harel, Y.", "O'Byrne, J.", "Mageau, G.", "Dietrich, A.", "Jerbi, K."]
+  year: 2022
+  venue: iScience, 25, 105103
+  doi: 10.1016/j.isci.2022.105103
+  projects: [creativity-humans-machines]
+
+- id: richiehalford2022fibr
+  type: article
+  title: An analysis-ready and quality controlled resource for pediatric brain white-matter research
+  authors: ["Richie-Halford, A.", "Cieslak, M.", "Ai, L.", "Caffarra, S.", "Covitz, S.", "Franco, A. R.", "…", "Rokem, A.", "Fibr Community Science Consortium (incl. Harel, Y.)"]
+  year: 2022
+  venue: Scientific Data, 9, 616
+  doi: 10.1038/s41597-022-01695-7
+  note: member of the Fibr Community Science Consortium
+  keywords: [neuroimaging, neuro-ai]
+
+- id: bellemare2019cogsci
+  type: abstract
+  title: "Systematic ambiguity: the effect of creativity and fractal dimension on pareidolia"
+  authors: ["Bellemare, A.", "Harel, Y.", "Besle, J.", "Dietrich, A.", "Jerbi, K."]
+  year: 2019
+  venue: Proceedings of the 41st Annual Meeting of the Cognitive Science Society (CogSci 2019), Montréal
+  pdf: https://journalpub.escholarship.org/cognitivesciencesociety/article/29118/galley/18989/download/
+  projects: [creativity-humans-machines]

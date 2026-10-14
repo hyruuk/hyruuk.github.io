@@ -1,0 +1,50 @@
+# The "Path" timeline on the About page (most recent first).
+# when: free text · what / where: either one text, or an en/fr pair as below.
+
+- when: "2026 –"
+  what:
+    en: Postdoctoral researcher
+    fr: Postdoctorat
+  where: Boston College · Boston, USA
+
+- when: "2026"
+  what:
+    en: Visiting researcher — Neural & Machine Learning Group (Rui Ponte Costa)
+    fr: Séjour de recherche — Neural & Machine Learning Group (Rui Ponte Costa)
+  where: University of Oxford · Oxford, UK
+
+- when: "2024 – 2025"
+  what:
+    en: Postdoctoral fellow — CNeuroMod (Lune Bellec)
+    fr: Stage postdoctoral — CNeuroMod (Lune Bellec)
+  where: CRIUGM · Montréal
+
+- when: "2024 –"
+  what:
+    en: Technical support & coordination — UNF-Neurothèque platform
+    fr: Soutien technique & coordination — plateforme UNF-Neurothèque
+  where: CRIUGM · Montréal
+
+- when: "·"
+  what:
+    en: Co-founder — Kairos ~ Hive art-science collective
+    fr: Cofondation — collectif art-science Kairos ~ Hive
+  where: kairos-hive.org
+
+- when: "2016 – 2024"
+  what:
+    en: PhD in Psychology — cognitive & computational neuroscience (Karim Jerbi, Lune Bellec)
+    fr: Doctorat en psychologie — neurosciences cognitives et computationnelles (Karim Jerbi, Lune Bellec)
+  where: Université de Montréal
+
+- when: "2014 – 2016"
+  what:
+    en: MSc in Psychology — cognitive neuropsychology
+    fr: Maîtrise en psychologie — neuropsychologie cognitive
+  where: Université de Montréal
+
+- when: "2011 – 2014"
+  what:
+    en: BSc in Psychology — honours
+    fr: Baccalauréat en psychologie — cheminement honor
+  where: Université de Montréal

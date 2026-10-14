@@ -1,0 +1,102 @@
+# HYRUUK — the generative acronym shown in the home panel (in place of the quote).
+#
+#   Harel Yann's [R] [U] of [U] [K]
+#
+# H and Y are always Harel Yann. Each visit draws one word per slot; clicking the block draws again.
+# Every word has an evocation (shown when you hover the word).
+#   weight: optional, default 1 — e.g. 0.3 makes a word rare, 0 disables it.
+#   To remove a word entirely, delete its line or put a "#" in front of it.
+#
+# Rules applied by the generator: the two U-words never share a stem (no "Unfolding of Unfolding",
+# "Universe of Universal", ...) and pairs listed under `avoid` are never drawn together.
+
+template: "Harel Yann's {R} {U1} of {U2} {K}"
+
+R: # character or dynamics of the system
+  - { word: Recursive, evokes: "Self-reference, feedback, cognition" }
+  - { word: Resonant, evokes: "Music, synchrony, neural rhythms" }
+  - { word: Recurrent, evokes: "Neural loops, repeated patterns" }
+  - { word: Rhythmic, evokes: "Oscillations, music, movement" }
+  - { word: Relational, evokes: "Networks, interactions, context" }
+  - { word: Resurgent, evokes: "Revival, return, renewed activity" }
+  - { word: Radiant, evokes: "Light, energy, consciousness" }
+  - { word: Restless, evokes: "Exploration, learning, dynamical systems" }
+  - { word: Regenerative, evokes: "Adaptation, plasticity, renewal" }
+  - { word: Reflective, evokes: "Metacognition, self-awareness" }
+  - { word: Reactive, evokes: "Action, perception, feedback" }
+  - { word: Resilient, evokes: "Robustness, adaptation" }
+  - { word: Reverberant, evokes: "Echoes, memory, neural propagation" }
+  - { word: Restorative, evokes: "Recovery, equilibrium" }
+  - { word: Revolutionary, evokes: "Paradigm shifts, transformation" }
+  - { word: Rippling, evokes: "Waves, propagation, cascading effects" }
+  - { word: Roving, evokes: "Exploration, attention, navigation" }
+  - { word: Riddle-like, evokes: "Mystery, hidden structure" }
+  - { word: Riverine, evokes: "Flow, currents, interconnectedness" }
+  - { word: Revelatory, evokes: "Discovery, insight, emergence" }
+
+U1: # core entity or conceptual space
+  - { word: Universe, evokes: "An interconnected world" }
+  - { word: Understanding, evokes: "Cognition and comprehension" }
+  - { word: Unification, evokes: "Integration of separate processes" }
+  - { word: Undertow, evokes: "Hidden forces beneath the surface" }
+  - { word: Underworld, evokes: "Hidden layers and latent spaces" }
+  - { word: Unfolding, evokes: "Processes developing over time" }
+  - { word: Utopia, evokes: "An ideal future or possibility" }
+  - { word: Unity, evokes: "Integration and coherence" }
+  - { word: Unknown, evokes: "The frontier of discovery" }
+  - { word: Ubiquity, evokes: "Patterns distributed everywhere" }
+  - { word: Ultrastructure, evokes: "Fine-grained organization" }
+  - { word: Urge, evokes: "Motivation and action" }
+  - { word: Upsurge, evokes: "Growth and sudden emergence" }
+  - { word: Undercurrent, evokes: "Hidden dynamics" }
+  - { word: Unison, evokes: "Synchrony and collective action" }
+  - { word: Upside, evokes: "A shift in perspective" }
+  - { word: Uplink, evokes: "Communication and connectivity" }
+  - { word: User-space, evokes: "Interactive worlds and computational environments" }
+  - { word: Uncertainty, evokes: "Bayesian inference and exploration" }
+  - { word: Unraveling, evokes: "Analysis and the revealing of structure" }
+
+U2: # modifier describing the K-word
+  - { word: Unfolding, evokes: "Becoming, development" }
+  - { word: Unseen, evokes: "Hidden mechanisms" }
+  - { word: Unknown, evokes: "Unexplored territory" }
+  - { word: Unconscious, evokes: "Implicit processes, awareness" }
+  - { word: Unbounded, evokes: "Open-ended possibility" }
+  - { word: Unifying, evokes: "Integration across scales" }
+  - { word: Unstable, evokes: "Metastability, nonlinear dynamics" }
+  - { word: Universal, evokes: "General principles" }
+  - { word: Uncharted, evokes: "Exploration and discovery" }
+  - { word: Unscripted, evokes: "Spontaneity, emergent behavior" }
+  - { word: Unbroken, evokes: "Continuity and flow" }
+  - { word: Unruly, evokes: "Complexity that resists control" }
+  - { word: Uncertain, evokes: "Probabilistic inference" }
+  - { word: Unspoken, evokes: "Implicit meaning" }
+  - { word: Unresolved, evokes: "Open scientific questions" }
+  - { word: Unconstrained, evokes: "Freedom and exploration" }
+  - { word: Unpredictable, evokes: "Complex dynamics" }
+  - { word: Unrepeatable, evokes: "Singular experiences" }
+  - { word: Unidirectional, evokes: "One-way flow, irreversibility" }
+  - { word: Unfamiliar, evokes: "Novelty, surprise, the strange" }
+
+K: # final conceptual anchor
+  - { word: Knowledge, evokes: "Science and discovery" }
+  - { word: Kinetics, evokes: "Movement, neural and behavioral dynamics" }
+  - { word: Kernels, evokes: "Latent structure, core representations, machine learning" }
+  - { word: Knots, evokes: "Entanglement, complexity, interconnectedness" }
+  - { word: Kingdoms, evokes: "Worlds, games, exploration" }
+  - { word: Kinematics, evokes: "Movement and embodied action" }
+  - { word: Kinship, evokes: "Relations and collective systems" }
+  - { word: Kaleidoscopes, evokes: "Changing patterns, generative variation" }
+  - { word: Keystones, evokes: "Essential organizing principles" }
+  - { word: Know-how, evokes: "Skill acquisition and implicit learning" }
+  - { word: Kindling, evokes: "Ignition, inspiration, emergence" }
+  - { word: Keepers, evokes: "Memory, preservation" }
+  - { word: Konnections, evokes: "A deliberately stylized spelling for networks" }
+  - { word: Kicks, evokes: "Impulses, action, sudden transitions" }
+  - { word: Karma, evokes: "Action, consequence, interdependence" }
+  - { word: Kindred, evokes: "Shared patterns and collective identity" }
+  - { word: Keyframes, evokes: "Moments that define a motion" }
+  - { word: Keyspaces, evokes: "Spaces of possible configurations" }
+
+# Pairs never drawn together, e.g. ["Unidirectional", "Karma"]
+avoid: []

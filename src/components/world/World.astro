@@ -1,0 +1,144 @@
+---
+/**
+ * #world — the artwork every page is a place in. Rendered identically on every page and never
+ * swapped by the router (see src/scripts/router/swap.ts), so it survives navigation.
+ * Per-page state comes from <html data-camera/data-stage/data-look> and is applied by
+ * src/scripts/world/controller.ts.
+ */
+import coreSrc from '../../scripts/world/camera-core.js?raw';
+import { getKeywords, roomCounts } from '../../lib/content';
+import { polygonsToPath, regionExtras, regions, world, worldImages } from '../../lib/data';
+import { localize, t } from '../../i18n/utils';
+
+const [W, H] = worldImages.units;
+const keywords = (await getKeywords()).filter((k) => regions[k.id]);
+const places = await Promise.all(
+  keywords.map(async (k) => {
+    const r = regions[k.id];
+    const counts = await roomCounts(k.id);
+    const total = counts.research + counts.code + counts['art-music'];
+    return { k, r, counts, total, d: polygonsToPath(r.polygons) };
+  }),
+);
+const extras = regionExtras.map((x) => ({
+  ...x,
+  d: polygonsToPath(x.polygons),
+  hrefEn: localize(`/${x.page}/`, 'en'),
+  hrefFr: localize(`/${x.page}/`, 'fr'),
+  labelEn: x.page === 'about' ? t('en', 'room.about') : x.page,
+  labelFr: x.page === 'about' ? t('fr', 'room.about') : x.page,
+}));
+const huge = `M-4000 -4000 H${W + 4000} V${H + 4000} H-4000 Z`;
+const looks = JSON.stringify(world.looks);
+const tiers = JSON.stringify(worldImages.tiers.map(({ w, avif, webp }) => ({ w, avif, webp })));
+const fallback = worldImages.tiers.find((t) => t.w >= 1815) ?? worldImages.tiers[0];
+
+// label visibility follows the hovered/focused/armed region
+const labelCss = places
+  .map(
+    ({ k }) =>
+      `#world:has(.hotspot[data-kw="${k.id}"]:is(:hover,:focus-visible,.armed)) .place-label[data-kw="${k.id}"]{opacity:1;transform-origin:center;}`,
+  )
+  .join('');
+
+const bootstrap = `(function(){${coreSrc.replace(/^export\s+/gm, '')}
+var root=document.documentElement,w=document.getElementById('world');
+var camEl=w.querySelector('.world-camera'),frame=frameOf(w.querySelector('.world-frame'));
+var spec=JSON.parse(root.dataset.camera||'{"rect":[0,0,${W},${H}]}');
+var c=computeCamera(frame,resolveSpec(spec,frame));
+camEl.style.transform=cameraTransform(c);
+var looks=JSON.parse(w.dataset.looks),look=looks[root.dataset.look]||looks.full;
+w.querySelector('.world-dim').style.opacity=look.dim;
+w.querySelector('.world-vignette').style.opacity=look.vignette;
+w.querySelector('.world-blur').style.opacity=look.blur;
+var t=pickTier(JSON.parse(w.dataset.tiers),${W},c.s,window.devicePixelRatio);
+var img=w.querySelector('.world-img');
+w.querySelector('.world-picture source').srcset=t.avif;img.src=t.webp;w.dataset.tier=t.w;
+var done=function(){w.dataset.loaded='';};img.decode?img.decode().then(done,done):(img.onload=done);
+w.querySelectorAll('.place-label').forEach(function(el){el.style.transform='translate('+(c.tx+el.dataset.x*c.s).toFixed(1)+'px,'+(c.ty+el.dataset.y*c.s).toFixed(1)+'px)';});
+})();`;
+---
+
+<div
+  id="world"
+  data-looks={looks}
+  data-tiers={tiers}
+  data-units-w={W}
+>
+  <div class="world-frame" aria-hidden="true"></div>
+  <div class="world-camera" style={`width:${W}px;height:${H}px;background-image:url(${worldImages.lqip})`}>
+    <picture class="world-picture" aria-hidden="true">
+      <source type="image/avif" />
+      <img class="world-img" alt="" width={W} height={H} decoding="async" fetchpriority="high" />
+    </picture>
+    <noscript><img class="world-img world-img--static" src={fallback.webp} alt="" width={W} height={H} /></noscript>
+    <img class="world-blur" src={worldImages.blur} alt="" aria-hidden="true" width={W} height={H} decoding="async" />
+    <div class="hotspot-layer">
+      <svg class="hotspots" viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="group" aria-label="Places">
+        {
+          places.map(({ k, r, total, d }, i) => (
+            <a
+              class="hotspot"
+              data-kw={k.id}
+              href={localize(`/explore/${k.id}/`, 'en')}
+              data-href-en={localize(`/explore/${k.id}/`, 'en')}
+              data-href-fr={localize(`/explore/${k.id}/`, 'fr')}
+              data-label-en={`${k.data.label.en} — ${total} ${t('en', total === 1 ? 'place.project' : 'place.projects')}`}
+              data-label-fr={`${k.data.label.fr} — ${total} ${t('fr', total === 1 ? 'place.project' : 'place.projects')}`}
+              aria-label={`${k.data.label.en} — ${total} ${t('en', total === 1 ? 'place.project' : 'place.projects')}`}
+              data-rect={r.camera.rect.join(',')}
+              style={`--accent:${k.data.accent}`}
+            >
+              <path class="spot-dim" fill-rule="evenodd" d={`${huge} ${d}`} />
+              <path class="hotspot-area" d={d} style={`--i:${i}`} />
+            </a>
+          ))
+        }
+        {
+          extras.map((x) => (
+            <a
+              class="hotspot hotspot--extra"
+              data-kw={x.id}
+              href={x.hrefEn}
+              data-href-en={x.hrefEn}
+              data-href-fr={x.hrefFr}
+              data-label-en={x.labelEn}
+              data-label-fr={x.labelFr}
+              aria-label={x.labelEn}
+              style="--accent:#ffffff"
+            >
+              <path class="spot-dim" fill-rule="evenodd" d={`${huge} ${x.d}`} />
+              <path class="hotspot-area" d={x.d} />
+            </a>
+          ))
+        }
+      </svg>
+    </div>
+  </div>
+  <div class="world-dim" aria-hidden="true"></div>
+  <div class="world-vignette" aria-hidden="true"></div>
+  <div class="world-grain" aria-hidden="true"></div>
+  <div class="world-labels" aria-hidden="true">
+    {
+      places.map(({ k, r, counts }) => (
+        <span class="place-label" data-kw={k.id} data-x={r.label[0]} data-y={r.label[1]} style={`--accent:${k.data.accent}`}>
+          <span class="place-label__dot" />
+          <span class="place-label__name" data-label-en={k.data.label.en} data-label-fr={k.data.label.fr}>
+            {k.data.label.en}
+          </span>
+          <span class="place-label__counts">
+            {counts.research > 0 && <i class="c-research">{counts.research}</i>}
+            {counts.code > 0 && <i class="c-code">{counts.code}</i>}
+            {counts['art-music'] > 0 && <i class="c-art">{counts['art-music']}</i>}
+          </span>
+        </span>
+      ))
+    }
+  </div>
+  <style is:inline set:html={labelCss}></style>
+  <script is:inline set:html={bootstrap}></script>
+</div>
+
+<script>
+  import '../../scripts/world/controller';
+</script>

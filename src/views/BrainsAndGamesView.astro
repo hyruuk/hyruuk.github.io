@@ -1,0 +1,74 @@
+---
+/** Brains & Games — the Discord community. Text lives in projects/brains-and-games/{en,fr}.md. */
+import { render } from 'astro:content';
+import Icon from '../components/Icon.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { t, type Lang } from '../i18n/utils';
+import { getProject } from '../lib/content';
+import { site } from '../lib/data';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const p = await getProject('brains-and-games', lang);
+const rendered = p ? await render(lang === 'fr' && p.frEntry ? p.frEntry : p.entry) : null;
+const Content = rendered?.Content;
+const invite = site.discord.invite;
+---
+
+<BaseLayout
+  lang={lang}
+  path="/brains-and-games/"
+  title={site.discord.name}
+  description={p?.summary}
+  place={{ kind: 'named', id: 'brains-and-games' }}
+  kind="community"
+  room="community"
+>
+  <div class="inner">
+    <div class="discord-card reveal" style="max-width:860px">
+      <p class="eyebrow" style="--accent:#8b93ff">{t(lang, 'room.community')} · Discord</p>
+      <h1 class="page-title" tabindex="-1">{site.discord.name}</h1>
+      {p && <p class="page-lead">{p.summary}</p>}
+      {
+        invite ? (
+          <a class="discord-join" href={invite} rel="noopener" target="_blank">
+            <Icon name="discord" size={20} />
+            {t(lang, 'bg.join')}
+          </a>
+        ) : (
+          <span class="discord-join" aria-disabled="true">
+            <Icon name="discord" size={20} />
+            {t(lang, 'bg.soon')}
+          </span>
+        )
+      }
+      {site.discord.serverId && <span class="online" data-discord-online={site.discord.serverId} data-label={t(lang, 'bg.online')} hidden />}
+    </div>
+    {
+      Content && (
+        <div class="prose reveal block" style="--i:2">
+          <Content />
+        </div>
+      )
+    }
+  </div>
+  <script>
+    import { onPage } from '../scripts/lifecycle';
+
+    // live "N online" count (only if a server id is configured and the Discord widget is enabled)
+    onPage((signal) => {
+      const el = document.querySelector<HTMLElement>('[data-discord-online]');
+      if (!el) return;
+      fetch(`https://discord.com/api/guilds/${el.dataset.discordOnline}/widget.json`, { signal })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (!data || typeof data.presence_count !== 'number') return;
+          el.textContent = `${data.presence_count} ${el.dataset.label}`;
+          el.hidden = false;
+        })
+        .catch(() => {});
+    });
+  </script>
+</BaseLayout>

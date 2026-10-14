@@ -1,0 +1,64 @@
+/* ============ page transitions ============
+   The art (#world) is not part of these: it is moved by the camera controller.
+   The router crossfades the page shot quickly (the art is identical on both shots), the header
+   stays put, and the new page's content is revealed while the camera lands. */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 220ms;
+  animation-timing-function: ease-out;
+}
+
+/* the header is identical on every page: keep its group short so the page is clickable again quickly */
+::view-transition-group(site-header) {
+  animation-duration: 220ms;
+}
+
+/* elements given a shared name on the fly (tile image → project header) */
+::view-transition-group(morph) {
+  animation-duration: 650ms;
+  animation-timing-function: var(--ease-in-out);
+}
+
+/* content reveal, staggered with --i */
+.reveal {
+  transition:
+    opacity 0.75s var(--ease-out),
+    transform 0.9s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+#page[data-entering] .reveal {
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(var(--enter-x, 0px), 18px, 0);
+  transition: none;
+  /* failsafe: never leave content hidden if a script fails */
+  animation: reveal-failsafe 0.6s ease 2.6s forwards;
+}
+
+@keyframes reveal-failsafe {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  .reveal {
+    transition: opacity 0.2s linear;
+    transform: none !important;
+  }
+
+  .tile__media img,
+  .tile__fallback,
+  .room__arrow {
+    transition: none !important;
+  }
+}
