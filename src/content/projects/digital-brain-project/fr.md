@@ -1,27 +1,21 @@
 ---
 title: Digital Brain Project
-summary: Enregistrer le cerveau de personnes qui apprennent de nouveaux jeux vidéo, pour un jeu de données international et ouvert destiné à entraîner un modèle de fondation du cerveau humain — avec l'équipe de Momchil Tomov au Boston College.
+summary: Un effort international et ouvert pour enregistrer le cerveau pendant des jeux interactifs et construire un modèle numérique du cerveau humain — j'y participe au sein de l'équipe de Momchil Tomov au Boston College.
+coverAlt: Une tête vue sous plusieurs angles qui tourne lentement, son cerveau s'allumant en bleu
 ---
 
-Comment un cerveau apprend-il un monde qu'il n'a jamais vu, y planifie-t-il, et généralise-t-il ce qu'il a appris ?
-Le [Digital Brain Project](https://www.digitalbrainproject.org/) s'attaque à cette question à grande échelle : des
-équipes du monde entier enregistrent l'activité cérébrale de personnes qui jouent à des jeux interactifs, résolvent des
-problèmes et prennent des décisions dans des scanners MEG et IRM à haut champ, et partagent tout en accès ouvert. Ces
-données entraîneront un modèle de fondation libre du cerveau humain — un « jumeau numérique » qui devrait réagir à une
-situation nouvelle comme le ferait un vrai cerveau.
+Comment le cerveau humain raisonne-t-il, planifie-t-il et décide-t-il dans des situations complexes ? Les modèles d'IA
+commencent à rendre compte de la façon dont le cerveau réagit à ce que l'on regarde ou écoute passivement, mais la
+manière dont l'activité cérébrale *produit un comportement intelligent* reste largement inconnue. Le
+[Digital Brain Project](https://www.digitalbrainproject.org/) veut réunir les données nécessaires pour la modéliser.
 
-Le projet est coordonné par la Fondation Adolphe de Rothschild, financé par Meta, en partenariat avec l'Université de
-Montréal. En juin 2026, neuf équipes ont été retenues parmi 58 candidatures — dont celle de
-[Momchil Tomov](https://www.bc.edu/bc-web/schools/morrissey/departments/psychology-neuroscience.html) au Boston
-College, où je suis en postdoctorat.
+Des équipes du monde entier enregistrent l'activité cérébrale de personnes qui jouent à des jeux interactifs dans des
+scanners — quelques participants chacune, sur de nombreuses sessions, pour construire des cartes individuelles denses du
+comportement intelligent. Les enregistrements sont partagés dans un format commun et réunis dans un jeu de données
+ouvert et anonymisé d'environ 15 000 heures, qui sert à entraîner un modèle numérique du cerveau humain, évalué ensuite
+sur des tests cognitifs et de raisonnement.
 
-Notre part : des jeux où il faut *apprendre* — de nouvelles règles, de nouveaux mondes, de nouveaux buts — pendant que
-nous imageons le cerveau. Je construis le volet expérimental, libre et reproductible :
-
-- **dbp_tasks** — un moteur d'expériences vidéoludiques déterministes, pour le comportement, l'IRMf, la MEG et l'EEG
-  intracrânien ;
-- **vgdl_task** — un lanceur de jeux écrits en Video Game Description Language, qui reproduit la tâche en scanner de
-  Tomov et al. (2023), et des contributions à **fmri-gym**, qui transforme des environnements Gymnasium en expériences
-  d'IRMf ;
-- **mario_task** — un lanceur reproductible de Super Mario Bros. avec marqueurs EEG/iEEG et sortie BIDS, dans la
-  continuité de [CNeuroMod Mario](/fr/projects/cneuromod-mario/).
+Le projet est un fonds de 15 millions de dollars américains coordonné par la Fondation Adolphe de Rothschild, en
+partenariat avec l'Université de Montréal et financé par Meta. Sa première cohorte réunit neuf équipes d'Europe et
+d'Amérique du Nord — dont celle de Momchil Tomov au Boston College, où je suis en postdoctorat — ainsi que des
+laboratoires contributeurs comme Courtois NeuroMod.

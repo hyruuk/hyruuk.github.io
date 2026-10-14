@@ -52,9 +52,10 @@ profiles:
 
 discord:
   name: Brains & Games
-  # Paste a permanent invite link (Discord → Server Settings → Invites → "Never expire").
-  invite: ""
-  # Optional: the server ID, to show a live "N online" count. Requires Server Settings → Widget → enabled.
+  # Permanent invite (never expires), from the project-update slides.
+  invite: "https://discord.gg/ZWn9W6zN7G"
+  # Optional live "N online" count: enable Server Settings → Widget in Discord, then set
+  # serverId: "1438184896605454479"
   serverId: ""
 
 # Public CV (PDF in public/cv/). Leave empty to hide the link. Never publish the version with

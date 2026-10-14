@@ -1,6 +1,7 @@
 ---
 title: Gamer in the scanner
 summary: Des cerveaux scannés pendant une partie de Shinobi III. La mémoire du jeu étiquette chaque événement — ennemis vaincus, coups reçus, sauts — pour calculer automatiquement des cartes cérébrales fiables.
+coverAlt: "Une partie de Shinobi III — le ninja se fraie un chemin dans une forêt pendant que des ennemis explosent"
 ---
 
 Les jeux vidéo sont riches, rapides et interactifs — tout ce que les expériences classiques de neuroimagerie ne sont

@@ -143,7 +143,7 @@ cover: ./cover.png                 # the tile picture (circle for research, 16:1
 coverAlt: What the picture shows   # for screen readers
 coverCredit: "Adapted from Fig. 3 of Doe et al. (2026) — CC BY 4.0"   # optional, shown under the cover
 coverFocus: "50% 30%"              # optional: which part to keep when a tile crops it (left→right, top→bottom)
-coverVideo: /media/<folder>/loop.mp4   # optional silent loop: plays on the project page, and on hover in tiles
+coverVideo: /media/<folder>/loop.mp4   # optional silent loop over the cover: plays by itself in cards and on the page
 figures:                           # shown after the text, in this order
   - src: ./figure1.png
     alt: What the figure shows                          # or  alt: { en: "…", fr: "…" }
@@ -162,7 +162,8 @@ figures:                           # shown after the text, in this order
   `ffmpeg -i demo.gif -an -vf "fps=25,format=yuv420p" -c:v libx264 -crf 26 -movflags +faststart demo.mp4`
   (and `ffmpeg -i demo.mp4 -frames:v 1 demo.png` for the still frame).
 - Videos play muted and loop, only while they are on screen, never for visitors who ask their system for reduced
-  motion, and always with a pause button.
+  motion (or save data), and on project pages always with a pause button. Keep them short (a few seconds) and light
+  (under ~1 MB): they play in the cards of every place where the project appears.
 - **Licences:** figures from open-access papers under CC BY can be used and adapted with a credit (say "adapted" if
   you cropped or recoloured them). CC BY-NC-ND figures may only be shown unchanged. Third-party posters and photos need
   the owner's permission.
@@ -208,7 +209,8 @@ The French texts were written in neutral form; adjust them to your taste.
   start with their letter.
 - **Music**: the wave plays random tracks from `public/data/liked-tracks.json`. To refresh it, export your playlist
   as CSV with [Exportify](https://exportify.app), then `npm run spotify -- ~/Downloads/Liked_Songs.csv` and commit.
-  (Visitors not logged in to Spotify hear 30-second previews — a Spotify rule; the player then shows a short note.
+  (Visitors not logged in to Spotify — or whose browser hides that login from other sites, like Firefox, Safari and
+  Brave — hear 30-second excerpts, one after the other; a small note then suggests logging in inside the player.
   Spotify's player has no volume control, so the music cannot fade in.) Until a visitor first uses it, the wave gently
   "breathes" and a small "♪ play music" hint appears once per visit.
 - **Brains & Games**: paste the permanent invite link in `site.yaml → discord.invite`; the description is in

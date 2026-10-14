@@ -187,6 +187,11 @@ function init(world: HTMLElement) {
 
   /* ---------- image tiers ---------- */
 
+  /**
+   * Swap in a sharper version of the art when zoomed in. It is downloaded and decoded early (during
+   * the flight), but only shown once the camera is at rest: replacing a 4,000-pixel image mid-flight
+   * makes the motion stutter while the browser uploads it to the graphics card.
+   */
   async function ensureTier(s: number) {
     const t = pickTier(tiers, unitsW, s, devicePixelRatio);
     if (t.w <= currentTier) return;
@@ -200,6 +205,7 @@ function init(world: HTMLElement) {
       return;
     }
     if (t.w <= currentTier) return;
+    if ('flying' in world!.dataset) return; // settle() asks again once landed (already decoded by then)
     currentTier = t.w;
     world!.dataset.tier = String(t.w);
     if (source) source.srcset = t.avif;
@@ -316,7 +322,8 @@ function init(world: HTMLElement) {
       }
     };
     if (!duration) reveal();
-    else revealTimer = window.setTimeout(reveal, duration * 0.55);
+    // reveal the new content as the camera slows down (not at full speed, when any extra work shows)
+    else revealTimer = window.setTimeout(reveal, duration * 0.72);
   });
 
   /* ---------- resize ---------- */

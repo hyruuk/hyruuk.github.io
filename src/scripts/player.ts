@@ -3,8 +3,9 @@
  * through Spotify's embed (iFrame API). The wave buttons (.sound-toggle) live in the swapped page;
  * the player lives in #player, which is never swapped — so playback survives navigation.
  *
- * Spotify rules we cannot change: visitors not logged in to Spotify hear 30-second previews,
- * and some browsers (Safari) need a tap inside the embed before playback starts.
+ * Spotify rules we cannot change: visitors not logged in to Spotify (or whose browser hides that login
+ * from other sites: Firefox, Safari, Brave) hear 30-second previews, chained here like a radio; a small
+ * note then suggests logging in inside the player. Some browsers (Safari) need a tap in the embed.
  */
 type Track = { id: string; name: string; artists: string };
 type PlaybackUpdate = { data: { isPaused: boolean; isBuffering: boolean; duration: number; position: number } };
@@ -172,6 +173,14 @@ function init(player: HTMLElement) {
       setState('idle');
     }
   }
+
+  // fetch our own track list as soon as the visitor shows intent, so the click starts faster
+  // (nothing is requested from Spotify before the click)
+  const warm = (e: Event) => {
+    if ((e.target as Element).closest?.('.sound-toggle')) void loadTracks().catch(() => {});
+  };
+  document.addEventListener('pointerover', warm, { passive: true });
+  document.addEventListener('focusin', warm);
 
   document.addEventListener('click', (e) => {
     const toggle = (e.target as Element).closest?.('.sound-toggle');

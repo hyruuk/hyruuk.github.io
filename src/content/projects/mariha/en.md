@@ -10,8 +10,9 @@ links:
   - { label: "Benchmark code", url: "https://github.com/courtois-neuromod/MariHA", kind: code }
   - { label: "Agent evaluation", url: "https://github.com/hyruuk/mario_eval", kind: code }
 cover: ./cover.png
-coverAlt: Part of a triangular similarity matrix, with blue blocks along the diagonal grouping similar scenes
-coverCredit: Detail of the scene-similarity matrix from Harel, Bellec et al. (RLC 2025 workshop)
+coverAlt: A reinforcement-learning agent playing the first level of Super Mario Bros.
+coverVideo: /media/mariha/agent.mp4
+coverCredit: An agent playing in MariHA
 figures:
   - src: ./learning.png
     style: plate
@@ -22,6 +23,14 @@ figures:
       en: "Human vs AI learning trajectories: scene-level success across learning stages on level 3-1, for people (A) and a PPO agent (B), then by level-design pattern (C, D)."
       fr: "Trajectoires d'apprentissage humaines et artificielles : réussite par scène au fil de l'apprentissage du niveau 3-1, chez les humains (A) et un agent PPO (B), puis par motif de level design (C, D)."
     credit: Harel, Bellec et al., RLC 2025 workshop
+  - src: ./matrix.png
+    alt:
+      en: Part of a triangular similarity matrix, with blue blocks along the diagonal grouping similar scenes
+      fr: Une partie d'une matrice de similarité triangulaire, avec des blocs bleus le long de la diagonale qui regroupent les scènes semblables
+    caption:
+      en: The game's 313 scenes, ordered into clusters of similar level-design patterns (detail).
+      fr: Les 313 scènes du jeu, regroupées en familles de motifs de level design semblables (détail).
+    credit: Harel, Bellec et al., RLC 2025 workshop, Fig. 1E
 ---
 
 Most game-playing AI is judged on its final score. People, though, learn in a particular order, forget, transfer

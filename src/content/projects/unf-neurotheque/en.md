@@ -9,6 +9,9 @@ links:
   - { label: "unf-montreal.ca", url: "https://unf-montreal.ca/", kind: website }
   - { label: "Tutorials", url: "https://github.com/hyruuk/neurotheque_tutorials", kind: code }
   - { label: "Pilot analyses", url: "https://github.com/hyruuk/neurotheque_pilots", kind: code }
+cover: ./cover.jpg
+coverAlt: The home page of unf-montreal.ca, with the logo of the functional neuroimaging unit
+coverCredit: unf-montreal.ca
 ---
 
 The Unité de neuroimagerie fonctionnelle (UNF) at CRIUGM runs MRI, MEG and EEG for researchers across Montréal. Since

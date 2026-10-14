@@ -7,6 +7,9 @@ sections: [code]
 keywords: [videogames]
 links:
   - { label: "Code", url: "https://github.com/hyruuk/LoLTDA", kind: code }
+cover: ./cover.png
+coverAlt: Bar chart of the champions most picked or banned at the 2019 League of Legends World Championship, Pantheon at 100%
+coverCredit: Chart made from the Worlds 2019 picks-and-bans data in the LoLTDA repository
 ---
 
 Before videogames became my research topic, they were — and still are — a hobby, competitive ones included: with my

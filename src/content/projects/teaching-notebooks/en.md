@@ -9,6 +9,9 @@ links:
   - { label: "neurotuto notebooks", url: "https://github.com/hyruuk/neurotuto", kind: code }
   - { label: "MAIN 2025: videogames & RL for Neuro-AI", url: "https://main-educational.github.io/2025/neuroai-videogames/", kind: slides }
   - { label: "Super Mario fMRI tutorial", url: "https://github.com/courtois-neuromod/mario.tutorials", kind: code }
+cover: ./cover.png
+coverAlt: Four views of a brain with red and blue patches, contrasting left- and right-thumb button presses during play
+coverCredit: From the CNeuroMod Mario tutorial notebooks
 figures:
   - src: ./ppo.png
     style: plate

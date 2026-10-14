@@ -15,8 +15,9 @@ links:
   - { label: "Analysis code", url: "https://github.com/courtois-neuromod/shinobi_fmri", kind: code }
   - { label: "Shinobi dataset", url: "https://docs.cneuromod.ca/datasets/shinobi.html", kind: data }
 cover: ./cover.png
-coverAlt: An inflated brain seen from the side, with bright yellow and red patches where activity rises when the player defeats an enemy
-coverCredit: Brain map for "Kill" events in one participant, from the paper's analysis code
+coverAlt: Shinobi III gameplay — the ninja fights his way through a forest as enemies explode
+coverVideo: /media/gamer-in-the-scanner/shinobi.mp4
+coverCredit: A participant's play, re-rendered from the dataset's replays (CNeuroMod Shinobi)
 figures:
   - src: ./kill-maps.jpg
     style: plate

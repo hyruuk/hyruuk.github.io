@@ -127,6 +127,8 @@ export const worldImages = worldAssets as {
   tiers: { w: number; h: number; avif: string; webp: string }[];
   blur: string;
   aura: string;
+  stars: string;
+  twinkle: string;
   lqip: string;
 };
 

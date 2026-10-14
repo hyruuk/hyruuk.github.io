@@ -1,6 +1,7 @@
 ---
 title: CNeuroMod Mario
 summary: Un vaste jeu de données IRMf longitudinal de personnes qui apprennent et jouent à Super Mario Bros. — avec rejeux, oculométrie, physiologie et annotations des scènes du jeu.
+coverAlt: "Une partie de Super Mario Bros. — Mario écrase des ennemis dans le premier niveau"
 ---
 
 Super Mario Bros. est l'un des jeux les plus étudiés en intelligence artificielle — et l'un des plus joués au monde.

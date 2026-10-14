@@ -1,6 +1,7 @@
 ---
 title: Une manette de jeu pour l'IRM et la MEG
 summary: Une manette en matériel libre, imprimée en 3D, qui fonctionne dans les scanners IRM et MEG sans bruit ni mouvement de tête — pour jouer à de vrais jeux pendant l'imagerie.
+coverAlt: "Un joueur assis sous le casque de la MEG joue à Shinobi sur l'écran de projection avec la manette rose imprimée en 3D"
 ---
 
 Les manettes ordinaires sont pleines de métal et d'électronique : interdites dans la salle d'IRM, elles ruinent les

@@ -3,12 +3,12 @@
  *
  * - LoopVideo: plays while at least a quarter of it is on screen, pauses otherwise; the button
  *   pauses/resumes it for good (WCAG 2.2.2). With reduced motion it never starts by itself.
- * - Tiles with a cover video play it on hover/focus only (desktop), over the still cover.
+ * - Tiles with a cover video play it while visible (never with reduced motion or data saver), over the
+ *   still cover.
  */
 import { onPage } from './lifecycle';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-const fine = matchMedia('(hover: hover) and (pointer: fine)');
 
 function play(v: HTMLVideoElement) {
   if (v.preload !== 'auto') v.preload = 'auto';
@@ -58,31 +58,26 @@ function setPaused(wrap: HTMLElement, paused: boolean) {
   btn.setAttribute('aria-label', (paused ? btn.dataset.labelPlay : btn.dataset.labelPause) ?? '');
 }
 
-/* ---------- tiles: play the cover video on hover / keyboard focus ---------- */
+/* ---------- tiles: cover animations play by themselves while visible ---------- */
 
-function tileVideo(target: EventTarget | null) {
-  const tile = (target as Element | null)?.closest?.<HTMLElement>('.tile');
-  const v = tile?.querySelector<HTMLVideoElement>('.tile__video');
-  return tile && v ? { tile, v } : null;
-}
-
-function start(target: EventTarget | null) {
-  if (reduced.matches) return;
-  const hit = tileVideo(target);
-  if (!hit || !hit.v.paused) return;
-  play(hit.v)
-    .then(() => hit.tile.classList.add('is-playing'))
-    .catch(() => {});
-}
-
-function stop(target: EventTarget | null, related: EventTarget | null) {
-  const hit = tileVideo(target);
-  if (!hit || hit.tile.contains(related as Node | null)) return;
-  hit.v.pause();
-  hit.tile.classList.remove('is-playing');
-}
-
-document.addEventListener('pointerover', (e) => fine.matches && start(e.target));
-document.addEventListener('pointerout', (e) => stop(e.target, e.relatedTarget));
-document.addEventListener('focusin', (e) => start(e.target));
-document.addEventListener('focusout', (e) => stop(e.target, e.relatedTarget));
+onPage(() => {
+  const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+  const videos = document.querySelectorAll<HTMLVideoElement>('#page .tile__video');
+  if (!videos.length || reduced.matches || saveData) return;
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        const v = e.target as HTMLVideoElement;
+        const tile = v.closest('.tile');
+        if (e.isIntersecting) {
+          play(v)
+            .then(() => tile?.classList.add('is-playing'))
+            .catch(() => {});
+        } else v.pause();
+      }
+    },
+    { threshold: 0.35 },
+  );
+  videos.forEach((v) => io.observe(v));
+  return () => io.disconnect();
+});

@@ -67,12 +67,9 @@ w.querySelectorAll('.place-label').forEach(function(el){el.style.transform='tran
   data-units-h={H}
 >
   <div class="world-frame" aria-hidden="true"></div>
-  <div class="world-stars" aria-hidden="true">
-    <div class="world-stars__twinkle"></div>
-  </div>
+  <div class="world-stars" aria-hidden="true" style={`--stars:url(${worldImages.stars});--twinkle:url(${worldImages.twinkle})`}></div>
   <div class="world-camera" style={`width:${W}px;height:${H}px`}>
-    <img class="world-aura" src={worldImages.aura} alt="" aria-hidden="true" decoding="async" />
-    <img class="world-flux" src="/world/flux.svg" alt="" aria-hidden="true" decoding="async" />
+    <img class="world-aura" src={worldImages.aura} alt="" aria-hidden="true" decoding="async" fetchpriority="low" />
     <div class="world-lqip" style={`background-image:url(${worldImages.lqip})`} aria-hidden="true"></div>
     <picture class="world-picture" aria-hidden="true">
       <source type="image/avif" />

@@ -1,6 +1,7 @@
 ---
 title: "Doctorat — Du flux cérébral au flow psychologique"
 summary: Ma thèse de doctorat (Université de Montréal, 2024) sur l'étude des fluctuations de l'attention par la neuroimagerie et le jeu vidéo — la manette, l'annotation automatique des jeux et la MEG des baisses d'attention.
+coverAlt: "Trois cercles qui se chevauchent — validité écologique, contrôle expérimental et boucle fermée — avec le jeu vidéo à leur intersection"
 ---
 
 *Du flux cérébral au flow psychologique : vers une étude de la fluctuation des états attentionnels par la

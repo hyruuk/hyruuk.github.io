@@ -12,10 +12,27 @@ links:
   - { label: "Build documentation", url: "https://controller-doc.readthedocs.io", kind: docs }
   - { label: "Hardware files (Zenodo)", url: "https://doi.org/10.5281/zenodo.7847544", kind: data }
   - { label: "Validation code (Zenodo)", url: "https://doi.org/10.5281/zenodo.7847577", kind: code }
-cover: ./cover.png
-coverAlt: 3D model of the MRI- and MEG-compatible gamepad, with a cross-shaped pad and four coloured buttons
-coverCredit: 3D model from the controller's open documentation
+cover: ./cover.jpg
+coverAlt: A player sits under the MEG helmet, playing Shinobi on the projection screen with the pink 3D-printed controller
+coverCredit: Playing Shinobi in the MEG with the controller (CNeuroMod)
 figures:
+  - src: ./overview.png
+    style: wide
+    alt:
+      en: "Summary figure: the 3D-printed controller and its parts, the comparison with a commercial controller, a replica built elsewhere, and photos in MEG and MRI"
+      fr: "Figure de synthèse : la manette imprimée en 3D et ses pièces, la comparaison avec une manette du commerce, une réplique fabriquée ailleurs, et des photos en MEG et en IRM"
+    caption:
+      en: "At a glance: open build files and software, an evaluation against a commercial controller (no significant difference in reaction times), a replication from the online documentation, and use in MEG and MRI."
+      fr: "En un coup d'œil : plans et logiciels ouverts, une évaluation face à une manette du commerce (pas de différence significative des temps de réaction), une réplication à partir de la documentation en ligne, et l'usage en MEG et en IRM."
+    credit: Harel (2024), PhD thesis, Université de Montréal
+  - src: ./model.jpg
+    alt:
+      en: 3D model of the gamepad with a cross-shaped pad and four coloured buttons
+      fr: Modèle 3D de la manette avec une croix directionnelle et quatre boutons de couleur
+    caption:
+      en: The 3D model, from the controller's open documentation.
+      fr: Le modèle 3D, tiré de la documentation ouverte de la manette.
+    credit: controller-doc.readthedocs.io
   - src: ./parts.jpg
     style: plate
     alt:
