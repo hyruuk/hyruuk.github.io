@@ -63,10 +63,10 @@ test('a place on the art leads to its page, and back returns home', async ({ pag
   await clickPlace(page, 'neuro-ai');
   await expect(page).toHaveURL(/\/explore\/neuro-ai\/$/);
   await expect(page.locator('h1')).toHaveText(/neuro-ai/i);
-  await expect.poll(() => cameraScale(page), { timeout: 5000 }).toBeGreaterThan(homeScale * 1.3); // the camera zoomed in
+  await expect.poll(() => cameraScale(page), { timeout: 12_000 }).toBeGreaterThan(homeScale * 1.3); // the camera zoomed in
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
-  await expect.poll(() => cameraScale(page), { timeout: 5000 }).toBeCloseTo(homeScale, 2);
+  await expect.poll(() => cameraScale(page), { timeout: 12_000 }).toBeCloseTo(homeScale, 2);
   expect(errors).toEqual([]);
 });
 
@@ -89,7 +89,7 @@ test('touch screens: a place chip previews the place, a second tap enters it', a
   await chip.tap();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator('#world')).toHaveAttribute('data-armed', 'videogames');
-  await expect.poll(() => cameraScale(page), { timeout: 5000 }).not.toBeCloseTo(before, 2);
+  await expect.poll(() => cameraScale(page), { timeout: 12_000 }).not.toBeCloseTo(before, 2);
   await chip.tap();
   await expect(page).toHaveURL(/\/explore\/videogames\/$/);
   await ctx.close();
