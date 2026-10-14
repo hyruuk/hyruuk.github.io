@@ -15,6 +15,16 @@ links:
   - { label: "Scene annotations (Zenodo)", url: "https://doi.org/10.5281/zenodo.19223182", kind: data }
   - { label: "Tutorials", url: "https://github.com/courtois-neuromod/mario.tutorials", kind: code }
   - { label: "Replay toolbox", url: "https://github.com/courtois-neuromod/mario.replays", kind: code }
+figures:
+  - src: ./scenes.png
+    style: wide
+    alt:
+      en: Level 3-1 cut into thirteen scenes, a table of the game patterns in each scene, and similarity matrices between scenes
+      fr: Le niveau 3-1 découpé en treize scènes, un tableau des motifs de jeu de chaque scène et des matrices de similarité entre scènes
+    caption:
+      en: Scene annotations. Level 3-1 split into short scenes (A), the level-design patterns found in each (B), and how similar scenes are within the level (C) and across all 313 scenes (D, E).
+      fr: Annotation des scènes. Le niveau 3-1 découpé en courtes scènes (A), les motifs de level design présents dans chacune (B), et la similarité des scènes dans le niveau (C) et parmi les 313 scènes (D, E).
+    credit: Harel, Bellec et al., RLC 2025 workshop
 ---
 
 Super Mario Bros. is one of the most studied games in AI research — and one almost everybody has played. In the

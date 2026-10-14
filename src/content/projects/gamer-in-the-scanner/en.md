@@ -14,6 +14,28 @@ links:
   - { label: "Preprint", url: "https://osf.io/preprints/psyarxiv/uakq9_v5", kind: preprint }
   - { label: "Analysis code", url: "https://github.com/courtois-neuromod/shinobi_fmri", kind: code }
   - { label: "Shinobi dataset", url: "https://docs.cneuromod.ca/datasets/shinobi.html", kind: data }
+cover: ./cover.png
+coverAlt: An inflated brain seen from the side, with bright yellow and red patches where activity rises when the player defeats an enemy
+coverCredit: Brain map for "Kill" events in one participant, from the paper's analysis code
+figures:
+  - src: ./kill-maps.jpg
+    style: plate
+    alt:
+      en: Brain maps for Kill events in four participants and their sessions, and their overlap with sound and reward maps
+      fr: Cartes cérébrales des événements « Kill » chez quatre participants et pour leurs sessions, et leur recouvrement avec les cartes du son et de la récompense
+    caption:
+      en: "Brain activity when the player defeats an enemy: maps for each participant and their sessions (A), compared with the game's sound level (B) and with reward (C)."
+      fr: "L'activité cérébrale quand le joueur élimine un ennemi : cartes pour chaque participant et ses sessions (A), comparées au volume sonore du jeu (B) et à la récompense (C)."
+    credit: "Harel et al. (2026), Imaging Neuroscience, Fig. 6 — CC BY 4.0"
+  - src: ./pipeline.png
+    style: plate
+    alt:
+      en: Analysis pipeline from BOLD, anatomical MRI and game replays through preprocessing and GLMs to brain maps, correlations and classifiers
+      fr: Chaîne d'analyse, de l'IRMf, de l'IRM anatomique et des replays du jeu au prétraitement et aux GLM, jusqu'aux cartes cérébrales, corrélations et classifieurs
+    caption:
+      en: From brain scans and game replays to brain maps, and how their quality is assessed.
+      fr: Des images cérébrales et des replays du jeu aux cartes cérébrales, et l'évaluation de leur qualité.
+    credit: "Harel et al. (2026), Imaging Neuroscience, Fig. 3 — CC BY 4.0"
 ---
 
 Videogames are rich, fast and interactive — exactly what classic brain-imaging experiments are not. The catch is
