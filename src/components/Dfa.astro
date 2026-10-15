@@ -1,0 +1,13 @@
+---
+/**
+ * DFA: a mixer fader that Does Fuck All (the studio joke: a dummy control for whoever needs
+ * something to tweak). It is wired to nothing on purpose: a native range input, no script, no
+ * listener, no animation. On the home panel it sits at the foot of the divider line, which doubles
+ * as its slot (bottom-right corner on phones). Styles: "DFA" in src/styles/layout.css.
+ */
+---
+
+<label class="dfa">
+  <input class="dfa__fader" type="range" min="0" max="100" value="70" />
+  <span class="dfa__label">DFA</span>
+</label>

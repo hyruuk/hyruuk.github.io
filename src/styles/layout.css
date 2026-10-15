@@ -546,6 +546,107 @@ html:has(#player[data-state='playing']) .spectrum i:nth-child(3) {
   }
 }
 
+/* ---------- DFA: a fader wired to nothing, on purpose (src/components/Dfa.astro) ----------
+   At the foot of the home panel's divider, which doubles as its slot. A plain range input with a
+   mixer's scale: static, so it costs nothing until someone drags it. */
+
+.dfa {
+  position: absolute;
+  left: -10px; /* the 21-px fader is centred on the divider (.panel--full::before) */
+  bottom: 7.8vh; /* where the divider ends */
+  display: block;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.dfa:hover,
+.dfa:focus-within {
+  opacity: 1;
+}
+
+.dfa__fader {
+  --dfa-tick: rgba(139, 154, 171, 0.4);
+  appearance: none;
+  display: block;
+  writing-mode: vertical-lr;
+  direction: rtl; /* up = more */
+  width: 21px;
+  height: 90px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none; /* a vertical drag moves the fader, not the page */
+}
+
+.dfa__fader:active {
+  cursor: grabbing;
+}
+
+/* the slot and a scale of 11 ticks on each side, in line with the cap's travel (cap 10 px → centres 5…85) */
+.dfa__fader::-webkit-slider-runnable-track {
+  box-sizing: border-box;
+  width: 21px;
+  height: 90px;
+  background:
+    linear-gradient(var(--line), var(--line)) 10px 0 / 1px 100% no-repeat,
+    repeating-linear-gradient(var(--dfa-tick) 0 1px, transparent 1px 8px) 2px 5px / 5px 81px no-repeat,
+    repeating-linear-gradient(var(--dfa-tick) 0 1px, transparent 1px 8px) 14px 5px / 5px 81px no-repeat;
+}
+
+.dfa__fader::-moz-range-track {
+  box-sizing: border-box;
+  width: 21px;
+  height: 90px;
+  background:
+    linear-gradient(var(--line), var(--line)) 10px 0 / 1px 100% no-repeat,
+    repeating-linear-gradient(var(--dfa-tick) 0 1px, transparent 1px 8px) 2px 5px / 5px 81px no-repeat,
+    repeating-linear-gradient(var(--dfa-tick) 0 1px, transparent 1px 8px) 14px 5px / 5px 81px no-repeat;
+}
+
+/* the cap: dark, with a white index line */
+.dfa__fader::-webkit-slider-thumb {
+  appearance: none;
+  box-sizing: border-box;
+  width: 21px;
+  height: 10px;
+  border: 0;
+  border-radius: 2px;
+  background:
+    linear-gradient(transparent 4px, #e9f3f9 4px 6px, transparent 6px),
+    linear-gradient(#1d2a37, #0b141d);
+  box-shadow:
+    inset 0 0 0 1px rgba(201, 212, 222, 0.24),
+    0 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+.dfa__fader::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 21px;
+  height: 10px;
+  border: 0;
+  border-radius: 2px;
+  background:
+    linear-gradient(transparent 4px, #e9f3f9 4px 6px, transparent 6px),
+    linear-gradient(#1d2a37, #0b141d);
+  box-shadow:
+    inset 0 0 0 1px rgba(201, 212, 222, 0.24),
+    0 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+.dfa__label {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding-left: 0.3em; /* balances the tracking after the last letter */
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.3em;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
 /* ---------- rail (all pages except home) ---------- */
 
 .panel--rail {
@@ -1855,6 +1956,13 @@ html[data-stage='home'] #player {
 
   .panel--full .bg-line {
     margin: 28px 0 28px;
+  }
+
+  /* no divider here: the DFA fader stands in the bottom-right corner, beside the sound */
+  .dfa {
+    left: auto;
+    right: 20px;
+    bottom: 48px;
   }
 
   .main--home {

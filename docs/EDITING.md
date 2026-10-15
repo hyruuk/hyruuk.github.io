@@ -12,7 +12,7 @@ online in about two minutes.
 - [6. Papers, talks and other entries](#6-papers-talks-and-other-entries)
 - [7. Places on the artwork](#7-places-on-the-artwork-keywords-and-regions)
 - [8. French](#8-french)
-- [9. HYRUUK, music, Discord](#9-hyruuk-music-discord)
+- [9. HYRUUK, music, DFA, Discord](#9-hyruuk-music-dfa-discord)
 - [10. Publishing, and when a build fails](#10-publishing-and-when-a-build-fails)
 - [11. Changing the artwork](#11-changing-the-artwork)
 - [12. Cheat sheet](#12-cheat-sheet)
@@ -204,7 +204,7 @@ English pages live at `/…`, French at `/fr/…`. For a project, add `fr.md` ne
 Places have `label:`/`blurb:` with `en` and `fr`. Interface words (menus, buttons) are in `src/i18n/ui.ts`.
 The French texts were written in neutral form; adjust them to your taste.
 
-## 9. HYRUUK, music, Discord
+## 9. HYRUUK, music, DFA, Discord
 
 - **HYRUUK** (`src/data/hyruuk.yaml`): "Harel Yann's {R} {U} of {U} {K}". Add or remove words; give a word
   `weight: 0.3` to make it rare, `0` (or a `#` in front of the line) to disable it. The build refuses words that don't
@@ -215,6 +215,9 @@ The French texts were written in neutral form; adjust them to your taste.
   Brave — hear 30-second excerpts, one after the other; a small note then suggests logging in inside the player.
   Spotify's player has no volume control, so the music cannot fade in.) Until a visitor first uses it, the wave gently
   "breathes" and a small "♪ play music" hint appears once per visit.
+- **DFA**: the little fader at the foot of the home panel's divider (bottom-right corner on phones) is wired to
+  nothing, on purpose. It lives in `src/components/Dfa.astro`; its look and position are under "DFA" in
+  `src/styles/layout.css`. To remove it, delete the `<Dfa />` line in `src/components/Panel.astro`.
 - **Brains & Games**: paste the permanent invite link in `site.yaml → discord.invite`; the description is in
   `src/content/projects/brains-and-games/en.md` / `fr.md`. For a live "N online" count, enable the server widget in
   Discord (Server Settings → Widget) and put the server ID in `discord.serverId`.

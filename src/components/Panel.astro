@@ -1,10 +1,10 @@
 ---
 /**
  * The right-hand panel. On the home page it is the full panel from the mockup (HYRUUK, rooms,
- * Discord line, sound); on every other page it slims into a rail. Both share a
- * view-transition-name, so the browser morphs one into the other during navigation.
+ * Discord line, sound, and the DFA fader); on every other page it slims into a rail.
  */
 import { localize, t, type Lang } from '../i18n/utils';
+import Dfa from './Dfa.astro';
 import Hyruuk from './Hyruuk.astro';
 import Icon from './Icon.astro';
 import SoundToggle from './SoundToggle.astro';
@@ -64,4 +64,6 @@ const rooms = [
   </a>
 
   <SoundToggle lang={lang} />
+
+  {variant === 'full' && <Dfa />}
 </aside>

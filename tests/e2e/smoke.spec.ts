@@ -156,6 +156,28 @@ test('HYRUUK draws a new expansion on click', async ({ page }) => {
   expect(await text.innerText()).not.toBe(before);
 });
 
+test('the DFA fader moves, and that is all it does', async ({ page }) => {
+  const errors = watchErrors(page);
+  // no HYRUUK scramble on arrival: a new draw can wrap differently and shift the page on phones
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.evaluate(() => document.fonts.ready);
+  const fader = page.getByRole('slider', { name: 'DFA' });
+  await fader.focus();
+  const state = () =>
+    page.evaluate(() => {
+      const world = document.getElementById('world')!;
+      const player = document.getElementById('player')!;
+      return { url: location.href, scroll: scrollY, flying: world.hasAttribute('data-flying'), armed: world.dataset.armed ?? '', player: player.dataset.state, playerHidden: player.hidden };
+    });
+  const before = await state();
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowUp');
+  await expect(fader).toHaveValue('73');
+  await page.waitForTimeout(400);
+  expect(await state()).toEqual(before);
+  expect(errors).toEqual([]);
+});
+
 test('reduced motion: the camera jumps instead of flying', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
