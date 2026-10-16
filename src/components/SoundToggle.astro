@@ -22,15 +22,20 @@ const { lang } = Astro.props;
     data-label-on={t(lang, 'sound.on')}
     data-label-off={t(lang, 'sound.off')}
   >
-    {/* two layers moved by the compositor (transform/opacity only): the still wave, and the running one */}
+    {/* two layers moved by the compositor (transform/opacity of HTML boxes only): the still wave, and the running one */}
     <span class="wave" aria-hidden="true">
-      <svg class="wave__still" viewBox="0 0 64 20">
-        <path d="M2 15.5c6 0 8.4-1.2 11.6-6.2S19 2.6 22 2.6s5.4 1.8 8.4 6.7 5.6 6.2 11.6 6.2" />
-      </svg>
-      <span class="wave__live">
-        <svg viewBox="0 0 80 20">
-          <path d="M0 10c4 0 4-7 8-7s4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 7 8 7" />
+      <span class="wave__still">
+        <svg viewBox="0 0 64 20">
+          <path d="M2 15.5c6 0 8.4-1.2 11.6-6.2S19 2.6 22 2.6s5.4 1.8 8.4 6.7 5.6 6.2 11.6 6.2" />
         </svg>
+      </span>
+      {/* exactly five periods of 16 units, from trough to trough: one period more than the window shows */}
+      <span class="wave__live">
+        <span class="wave__run">
+          <svg viewBox="0 0 80 20">
+            <path d="M0 17c4 0 4-14 8-14s4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 14 8 14 4-14 8-14 4 14 8 14" />
+          </svg>
+        </span>
       </span>
     </span>
     <span class="sound-hint" aria-hidden="true">♪ {t(lang, 'sound.hint')}</span>

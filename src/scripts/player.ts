@@ -50,15 +50,50 @@ function init(player: HTMLElement) {
   let ready: Promise<EmbedController> | null = null;
   let controller: EmbedController | null = null;
   const recent: string[] = [];
-  let advancing = false;
+  let advancing = false; // changing tracks: the embed reports "paused" meanwhile, the wave keeps running
+  let stall = 0;
   let lastPosition = 0;
   let lastDuration = 0;
 
   const setState = (state: 'idle' | 'loading' | 'playing' | 'paused' | 'closed') => {
+    if (player.dataset.state === state) return; // the embed repeats its state every second
     player.dataset.state = state;
     player.hidden = state === 'idle' || state === 'closed';
     syncToggles();
+    alignLoops();
   };
+
+  /**
+   * Every page brings its own panel, so the wave's looping animations (breathing, running wave, colour
+   * bar) would restart at each navigation and the wave would skip: run them all on the document's clock.
+   */
+  function alignLoops() {
+    document.querySelectorAll('.sound').forEach((el) => {
+      for (const a of el.getAnimations({ subtree: true })) {
+        if (a.effect?.getTiming().iterations === Infinity) a.startTime = 0;
+      }
+    });
+  }
+
+  /**
+   * Waiting for sound (start, resume, next track): the wave runs meanwhile. If nothing plays for a while
+   * (Safari can wait for a tap inside the embed), show the music as paused.
+   */
+  function expectSound() {
+    window.clearTimeout(stall);
+    stall = window.setTimeout(() => {
+      advancing = false;
+      if (player.dataset.state === 'playing' || player.dataset.state === 'loading') setState('paused');
+    }, 12000);
+  }
+
+  function advance(delay: number) {
+    advancing = true;
+    expectSound();
+    window.setTimeout(() => {
+      if (advancing) void next();
+    }, delay);
+  }
 
   function syncToggles() {
     const on = player.dataset.state === 'playing' || player.dataset.state === 'loading';
@@ -114,20 +149,25 @@ function init(player: HTMLElement) {
   }
 
   function onUpdate(e: PlaybackUpdate) {
-    const { isPaused, duration, position } = e.data;
+    const { isPaused, isBuffering, duration, position } = e.data;
     // Spotify serves 30-second previews when it can't see a login (not logged in, or the browser keeps
     // the site's Spotify iframe separate from spotify.com). Only then do we show the hint.
     if (duration > 0) player.toggleAttribute('data-preview', duration <= 31000);
-    if (!isPaused && player.dataset.state !== 'closed') setState('playing');
     const nearEnd = duration > 0 && position >= duration - 900;
     const justEnded = isPaused && position === 0 && lastDuration > 0 && lastPosition >= lastDuration - 2500;
     lastPosition = position;
     lastDuration = duration;
-    if ((nearEnd || justEnded) && !advancing) {
-      advancing = true;
-      window.setTimeout(() => void next().finally(() => (advancing = false)), nearEnd ? 900 : 0);
-    } else if (isPaused && player.dataset.state === 'playing' && !nearEnd) {
-      setState('paused');
+    if (player.dataset.state === 'closed') return;
+    if (!isPaused && !isBuffering && duration > 0 && !nearEnd) {
+      // sound for real: while it loads a track, the embed says "playing" and "paused" in turn (Firefox),
+      // and it reports a new track at its very end before starting it
+      window.clearTimeout(stall);
+      advancing = false;
+      setState('playing');
+    } else if ((nearEnd || justEnded) && !advancing && player.dataset.state !== 'paused') {
+      advance(nearEnd ? 900 : 0);
+    } else if (isPaused && player.dataset.state === 'playing' && !advancing && !nearEnd) {
+      setState('paused'); // paused inside the embed
     }
   }
 
@@ -141,7 +181,6 @@ function init(player: HTMLElement) {
           controller = c;
           c.addListener('ready', () => resolve(c));
           c.addListener('playback_update', onUpdate);
-          c.addListener('playback_started', () => setState('playing'));
         });
       });
     })();
@@ -161,8 +200,17 @@ function init(player: HTMLElement) {
     await load(randomTrack(list));
   }
 
+  /** Paused or closed by the visitor: a track change under way must not start the music again. */
+  function halt(state: 'paused' | 'closed') {
+    controller?.pause();
+    advancing = false;
+    window.clearTimeout(stall);
+    setState(state);
+  }
+
   async function start() {
     setState('loading');
+    expectSound();
     try {
       const list = await loadTracks();
       const first = randomTrack(list);
@@ -195,24 +243,22 @@ function init(player: HTMLElement) {
     }
     const state = player.dataset.state;
     if (!controller) void start();
-    else if (state === 'playing' || state === 'loading') {
-      controller.pause();
-      setState('paused');
-    } else {
-      setState('playing');
+    else if (state === 'playing' || state === 'loading') halt('paused');
+    else {
+      setState('loading');
+      expectSound();
       controller.resume();
     }
   });
 
-  player.querySelector('.player__next')?.addEventListener('click', () => void next());
-  player.querySelector('.player__close')?.addEventListener('click', () => {
-    controller?.pause();
-    setState('closed');
-  });
+  player.querySelector('.player__next')?.addEventListener('click', () => advance(0));
+  player.querySelector('.player__close')?.addEventListener('click', () => halt('closed'));
 
   document.addEventListener('astro:after-swap', () => {
     syncLabels();
     syncToggles();
+    alignLoops();
   });
   syncLabels();
+  alignLoops();
 }

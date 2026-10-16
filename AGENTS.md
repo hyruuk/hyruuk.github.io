@@ -76,6 +76,17 @@ persistent Spotify player; HYRUUK generative acronym in the home panel.
 - Sound cue: `#player[data-known]` (localStorage) stops the wave's idle breathing; `[data-hinted]` (sessionStorage)
   limits the "♪ play music" hint to once per visit. The Spotify iFrame API has no volume control (only
   play/pause/resume/seek), so audio fades are impossible with it. `#player[data-preview]` = 30 s previews.
+- **The running wave must never jump** (e2e tests guard each point):
+  - Its 125 % width sits on an HTML box (`.wave__run`), never on the `<svg>`: the global `svg { max-width: 100% }`
+    squeezed it back into the window, the spare period showed, and the wave snapped back at every loop. The path
+    is whole periods only, from trough to trough.
+  - Its swell is a CSS *transition*, so the new panel that each page brings shows it at full height instead of
+    swelling again.
+  - `alignLoops()` (`player.ts`) puts every infinite animation in `.sound` on the document clock, so a new panel
+    keeps the same phase.
+  - The state turns `playing` only on real playback (`!isPaused && !isBuffering`, not at a track's end). While a
+    track loads, Firefox's embed reports "paused" and a stale "end of track", so a track change keeps the state
+    (`advancing`), and a 12 s failsafe shows "paused" if nothing plays.
 - **DFA fader** (`src/components/Dfa.astro`, home panel only, riding the foot of the divider; bottom-right on phones):
   a mixer fader that Does Fuck All, on purpose (studio joke). Keep it wired to nothing — no script, no listener, no
   animation — and don't explain it on the site. The e2e test checks that moving it changes nothing else.

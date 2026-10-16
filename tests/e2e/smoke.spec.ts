@@ -11,20 +11,53 @@ function watchErrors(page: Page) {
   return errors;
 }
 
-/** Stub Spotify's iFrame API so the player can be tested offline. */
+/**
+ * Stub Spotify's iFrame API so the player can be tested offline. play() reports playback shortly after,
+ * like the real embed; with window.__spotify.manual set, the test sends the embed's reports itself
+ * (__spotify.emit) and counts the tracks the player loads (__spotify.loads).
+ */
 async function stubSpotify(page: Page) {
   await page.route('https://open.spotify.com/embed/iframe-api/v1', (route) =>
     route.fulfill({
       contentType: 'application/javascript',
       body: `window.onSpotifyIframeApiReady({ createController(el, opts, cb) {
         const f = document.createElement('iframe'); f.dataset.stub = '1'; el.replaceWith(f);
-        const ls = {}; const c = { loadEntity(){}, loadUri(){}, pause(){}, resume(){},
-          play(){ (ls.playback_started||[]).forEach(fn => fn({ data: {} })); },
+        const ls = {}; const emit = (ev, data) => (ls[ev] || []).forEach((fn) => fn({ data }));
+        const spotify = (window.__spotify = { manual: false, loads: 0, emit });
+        const c = { loadEntity(){ spotify.loads++; }, loadUri(){}, pause(){}, resume(){},
+          play(){
+            emit('playback_started', {});
+            if (!spotify.manual) setTimeout(() => emit('playback_update', { isPaused: false, isBuffering: false, position: 1000, duration: 30000 }), 50);
+          },
           addListener(ev, fn){ (ls[ev] ||= []).push(fn); if (ev === 'ready') setTimeout(() => fn({}), 10); } };
         cb(c);
       } });`,
     }),
   );
+}
+
+/** Largest difference of any colour channel between two screenshots of the same size (0–255). */
+async function pixelDiff(page: Page, a: Buffer, b: Buffer) {
+  const blank = await page.context().newPage();
+  const diff = await blank.evaluate(async (urls) => {
+    const pixels = (src: string) =>
+      new Promise<Uint8ClampedArray>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const c = Object.assign(document.createElement('canvas'), { width: img.width, height: img.height });
+          const g = c.getContext('2d')!;
+          g.drawImage(img, 0, 0);
+          resolve(g.getImageData(0, 0, c.width, c.height).data);
+        };
+        img.src = src;
+      });
+    const [pa, pb] = await Promise.all(urls.map(pixels));
+    let max = pa.length === pb.length ? 0 : 255;
+    for (let i = 0; i < Math.min(pa.length, pb.length); i++) max = Math.max(max, Math.abs(pa[i] - pb[i]));
+    return max;
+  }, [a, b].map((buf) => `data:image/png;base64,${buf.toString('base64')}`));
+  await blank.close();
+  return diff;
 }
 
 /** Touch screens preview a place on the first tap and enter it on the second. */
@@ -231,6 +264,67 @@ test('the wave invites to play music until it has been used once', async ({ page
   await expect(player).toHaveAttribute('data-known', '');
   await page.reload();
   await expect(player).toHaveAttribute('data-known', '');
+});
+
+test('the music wave loops without a jump', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile', 'same geometry everywhere: one desktop pixel grid is enough');
+  await page.emulateMedia({ reducedMotion: 'reduce' }); // the wave stands still: the test moves it
+  await stubSpotify(page);
+  await page.goto('/');
+  await page.locator('.sound-toggle').first().click();
+  await page.mouse.move(0, 0);
+  const wave = page.locator('.panel--full .wave');
+  await expect(wave.locator('.wave__live')).toHaveCSS('opacity', '1');
+  await wave.evaluate((el: HTMLElement) => (el.style.background = '#000')); // the world behind it moves
+  // each loop slides the wave by one period, then starts over: its last frame must be its first
+  const at = async (transform: string) => {
+    await wave.locator('.wave__run').evaluate((el: HTMLElement, t) => (el.style.transform = t), transform);
+    return wave.screenshot();
+  };
+  expect(await pixelDiff(page, await at('translateX(-20%)'), await at('none'))).toBeLessThanOrEqual(8); // compositing noise: ≤ 1
+});
+
+test('the music wave runs on through page changes', async ({ page }) => {
+  await stubSpotify(page);
+  await page.goto('/research/');
+  await page.locator('.sound-toggle:visible').first().click();
+  await expect(page.locator('#player')).toHaveAttribute('data-state', 'playing');
+  const loopStart = () => page.evaluate(() => Number(document.querySelector('#page .wave__run')!.getAnimations()[0].startTime) % 1100);
+  const before = await loopStart();
+  await page.locator('#page a[href^="/projects/"]:not([href="/projects/"]):visible').first().click();
+  await expect(page).toHaveURL(/\/projects\/.+\/$/);
+  await settle(page);
+  // the new page's wave is at full height at once (no new swell), and its loop goes on in step
+  expect(await page.evaluate(() => document.querySelector('#page .wave__live')!.getAnimations().length)).toBe(0);
+  expect(await loopStart()).toBe(before);
+});
+
+test('the music wave keeps running while the next track loads', async ({ page }) => {
+  await stubSpotify(page);
+  await page.goto('/');
+  await page.locator('.sound-toggle').first().click();
+  const player = page.locator('#player');
+  await expect(player).toHaveAttribute('data-state', 'playing');
+  await page.evaluate(() => {
+    const w = window as unknown as { __spotify: { manual: boolean }; __states: string[] };
+    w.__spotify.manual = true;
+    w.__states = [];
+    const p = document.getElementById('player')!;
+    new MutationObserver(() => w.__states.push(p.dataset.state!)).observe(p, { attributeFilter: ['data-state'] });
+  });
+  type Report = { isPaused: boolean; isBuffering: boolean; position: number; duration: number };
+  const report = (data: Report) => page.evaluate((d) => (window as unknown as { __spotify: { emit: (ev: string, d: Report) => void } }).__spotify.emit('playback_update', d), data);
+  const loads = () => page.evaluate(() => (window as unknown as { __spotify: { loads: number } }).__spotify.loads);
+  // what Firefox's embed reports around a track change (recorded from the real one)
+  await report({ isPaused: false, isBuffering: false, position: 30000, duration: 30000 }); // end of the track
+  await expect.poll(loads).toBe(1); // the next one is requested
+  await report({ isPaused: true, isBuffering: false, position: 0, duration: 29713 });
+  await report({ isPaused: false, isBuffering: false, position: 29713, duration: 29713 }); // not playing yet
+  await report({ isPaused: true, isBuffering: true, position: 0, duration: 29713 });
+  await page.waitForTimeout(1200);
+  await report({ isPaused: false, isBuffering: false, position: 1150, duration: 29713 }); // sound
+  expect(await page.evaluate(() => (window as unknown as { __states: string[] }).__states)).toEqual([]); // never stopped
+  expect(await loads()).toBe(1); // and no track skipped
 });
 
 test('looping figures play on screen and can be paused', async ({ page }) => {

@@ -448,21 +448,34 @@ html:has(#player[data-state='idle']:not([data-known], [data-hinted])) .panel--fu
   position: absolute;
   inset: 0;
   display: block;
+  transition: opacity 0.35s ease;
+}
+
+.wave svg {
   width: 100%;
   height: 100%;
   overflow: visible;
 }
 
+/* the running wave fades out at both ends of its window. Its swell is a transition, not an animation:
+   the new panel that comes with each page then shows it at full height instead of swelling again */
 .wave__live {
   overflow: hidden;
   opacity: 0;
+  transform: scaleY(0.12);
+  mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
+  transition:
+    opacity 0.35s ease,
+    transform 2.4s var(--ease-out);
 }
 
-/* the running wave is 80 units wide in a 64-unit window, and slides by one period (16 units) */
-.wave__live svg {
+/* 80 units wide in a 64-unit window, sliding by one period (16 units): a seamless loop. The width
+   sits on this box, not on the <svg>, which the global max-width: 100% would squeeze back into the
+   window — the spare period then showed, and the wave jumped back at every loop */
+.wave__run {
   position: absolute;
-  left: 0;
   top: 0;
+  left: 0;
   width: 125%;
   height: 100%;
 }
@@ -477,22 +490,17 @@ html:has(#player[data-state='loading']) .wave__still {
   opacity: 0;
 }
 
+/* when the music starts (or resumes), the running wave fades in and swells */
 html:has(#player[data-state='playing']) .wave__live,
 html:has(#player[data-state='loading']) .wave__live {
   opacity: 1;
-  /* when the music starts (or resumes), the moving wave swells in */
-  animation: wave-swell 2.4s var(--ease-out) both;
+  transform: none;
 }
 
-html:has(#player[data-state='playing']) .wave__live svg,
-html:has(#player[data-state='loading']) .wave__live svg {
+/* looping animations restart with every new panel: src/scripts/player.ts puts them on one clock */
+html:has(#player[data-state='playing']) .wave__run,
+html:has(#player[data-state='loading']) .wave__run {
   animation: wave-run 1.1s linear infinite;
-}
-
-@keyframes wave-swell {
-  from {
-    transform: scaleY(0.12);
-  }
 }
 
 @keyframes wave-run {

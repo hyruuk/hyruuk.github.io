@@ -51,10 +51,13 @@
 
   /* the sound cue: no breathing or swelling; the hint simply stays visible until first use */
   .wave__still,
-  .wave__live,
-  .wave__live svg,
+  .wave__run,
   .sound-toggle::after {
     animation: none !important;
+  }
+
+  .wave__live {
+    transition: opacity 0.35s ease !important;
   }
 
   html:has(#player[data-state='idle']:not([data-known])) .panel--full .sound-hint {
