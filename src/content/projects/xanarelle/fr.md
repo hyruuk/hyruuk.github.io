@@ -1,6 +1,7 @@
 ---
 title: Xanarelle (DJ)
 summary: Derrière les platines sous le nom de Xanarelle — techno, psytech, house et drum & bass, des soirées de clôture de congrès aux pistes de danse.
+coverAlt: Le logo de Xanarelle, un visage barbu et souriant coiffé d'un casque de DJ, qui brille en rose sur un fond bleu nuit.
 ---
 
 Quand je n'analyse pas les rythmes cérébraux, je joue avec ceux de la piste de danse. Sous le nom de **Xanarelle**, je

@@ -7,6 +7,8 @@ end: ongoing
 sections: [art-music]
 keywords: [music]
 weight: 2
+cover: ./cover.jpg
+coverAlt: The Xanarelle logo, a grinning bearded face wearing DJ headphones, glowing pink on a night-blue background.
 ---
 
 When I'm not analysing brain rhythms, I play with dance-floor ones. As **Xanarelle** I mostly play techno and psytech,
